@@ -33,18 +33,30 @@ class InputCoordinator:
 
         # Standardize Input
         # Priority 1: Raw landmarks from physical camera
-        if state.hands or state.handedness:
+        has_fresh_landmarks = (state.hands or state.handedness) and (
+            current_time - state.last_hand_timestamp <= self.flicker_timeout
+        )
+
+        inputs = []
+        if has_fresh_landmarks:
             results = DummyResults(state.hands, state.handedness)
             inputs = self.input_processor.convert_mediapipe_to_inputs(
                 results, frame_shape, projector_pose=state.projector_pose
             )
+
+        if inputs:
             state.update_inputs(inputs, current_time)
-        # Priority 2: Use existing inputs (might be from Remote Driver)
         else:
-            inputs = state.inputs
-            # Expire inputs if no update received for > flicker_timeout
-            if inputs and (current_time - state.last_hand_timestamp > self.flicker_timeout):
-                state.inputs = []
+            # Expire inputs and gesture if no update received for > flicker_timeout
+            if current_time - state.last_hand_timestamp > self.flicker_timeout:
+                if state.inputs:
+                    state.update_inputs([], current_time)
+                if state.hands:
+                    state.hands = []
+                if state.handedness:
+                    state.handedness = []
+                if state.gesture:
+                    state.gesture = None
 
         # Sync common vision results to AppContext
         self.app.app_context.last_camera_frame = state.background

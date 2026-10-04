@@ -666,14 +666,11 @@ class WorldState:
                     tx.update(self._raw_aruco_atom, raw_payload)
 
             elif result.type == ResultType.HANDS:
-                if (
-                    isinstance(result.data, list)
-                    and len(result.data) > 0
-                    and hasattr(result.data[0], "gesture")
-                ):
+                if isinstance(result.data, list):
                     tx.update(self._inputs_atom, result.data, force=True)
-                    self.last_hand_timestamp = current_time
-                else:
+                    if result.data:
+                        self.last_hand_timestamp = current_time
+                elif isinstance(result.data, dict):
                     # Raw landmarks from MediaPipe worker
                     new_landmarks = result.data.get("landmarks", [])
                     new_handedness = result.data.get("handedness", [])
@@ -681,7 +678,8 @@ class WorldState:
                     # Update landmarks and handedness; they update their own timestamps if changed
                     tx.update(self._landmarks_atom, new_landmarks)
                     tx.update(self._handedness_atom, new_handedness)
-                    self.last_hand_timestamp = current_time
+                    if new_landmarks or new_handedness:
+                        self.last_hand_timestamp = current_time
 
             elif result.type == ResultType.GESTURE:
                 tx.update(self._gesture_atom, result.data.get("gesture"))
