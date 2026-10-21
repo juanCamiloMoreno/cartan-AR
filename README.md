@@ -1,5 +1,12 @@
 # Light Map
 
+> **Experimental fork.** This is a personal, non-commercial fork of
+> [regelatwork/light-map](https://github.com/regelatwork/light-map) by **Rodrigo Chandia**, who
+> created Light Map and wrote all of the original code. All credit for the platform goes to him. This
+> fork adds an experimental Catan game layer, built as a learning exercise with AI assistance
+> ("vibe coding" with Claude Code). It is not affiliated with or endorsed by the original author. See
+> [docs/catan.md](docs/catan.md) for what was added.
+
 Light Map is an interactive Augmented Reality (AR) tabletop platform that merges physical gaming with digital enhancements. By turning any flat surface into an interactive display that "understands" the physical objects and hands placed upon it, the system provides a low-cost, high-immersion alternative to traditional digital tabletops.
 
 ## Features
