@@ -211,7 +211,7 @@ def run_app(args):
 
     # Detect runtime camera resolution first
     runtime_camera_width, runtime_camera_height = 0, 0
-    with Camera() as cam:
+    with Camera(index=args.camera) as cam:
         runtime_camera_width, runtime_camera_height = cam.width, cam.height
 
     # 2. Setup App
@@ -271,7 +271,7 @@ def run_app(args):
 
     try:
         with (
-            Camera() as cam,
+            Camera(index=args.camera) as cam,
             ProjectorWindow(window_name, native_screen_width, native_screen_height) as app_win,
         ):
             # --- Resolution Mismatch Check ---
@@ -380,7 +380,9 @@ def run_app(args):
 
             # Initialize right camera if stereo vision is enabled and triangulator is available
             cam_right = None
-            if app.config.stereo_vision.enable_stereo:
+            if args.no_stereo:
+                logger.info("--no-stereo given. Running in single-camera mono mode.")
+            elif app.config.stereo_vision.enable_stereo:
                 if getattr(app, "stereo_triangulator", None) is not None:
                     try:
                         device_right = app.config.stereo_vision.camera_right_device or "/dev/video1"
@@ -583,6 +585,7 @@ def run_app(args):
                                 state.notifications_version,
                                 state.projector_pose_version,
                                 state.config_version,
+                                state.catan_version,
                             )
 
                             if current_world_ts != last_world_ts:
@@ -812,7 +815,15 @@ def run_app(args):
         cv2.destroyAllWindows()
 
 
-def main():
+def camera_index(value: str) -> int:
+    """argparse type: a non-negative camera device index."""
+    index = int(value)
+    if index < 0:
+        raise argparse.ArgumentTypeError("camera index must be 0 or greater")
+    return index
+
+
+def build_parser() -> tuple[argparse.ArgumentParser, argparse._SubParsersAction]:
     # Parent parser for common arguments
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
@@ -853,6 +864,18 @@ def main():
     )
     run_parser.add_argument(
         "--action", type=str, help="MenuAction to execute on startup", default=None
+    )
+    run_parser.add_argument(
+        "--camera",
+        type=camera_index,
+        default=0,
+        help="Index of the camera to use (0 is the first one, 1 the second, ...)",
+    )
+    run_parser.add_argument(
+        "--no-stereo",
+        action="store_true",
+        default=False,
+        help="Use a single camera: do not open the second (stereo) camera",
     )
     run_parser.add_argument(
         "--remote-hands",
@@ -918,6 +941,12 @@ def main():
 
     # Version command
     subparsers.add_parser("version", help="Show version information")
+
+    return parser, subparsers
+
+
+def main():
+    parser, subparsers = build_parser()
 
     # Default to 'run' if no command provided
     if len(sys.argv) == 1:

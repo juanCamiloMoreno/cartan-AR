@@ -1,3 +1,4 @@
+import json
 import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
@@ -78,6 +79,10 @@ class ActionDispatcher:
         self.register("UPDATE_SYSTEM_CONFIG", handle_update_system_config)
         self.register("MENU_INTERACT", handle_menu_interact)
         self.register("TRIGGER_PING", handle_trigger_ping)
+        self.register("CATAN_ROLL", handle_catan_roll)
+        self.register("CATAN_BUILD", handle_catan_build)
+        self.register("CATAN_REMOVE", handle_catan_remove)
+        self.register("CATAN_ROBBER", handle_catan_robber)
         self.register("TOGGLE_EXCLUSIVE_VISION", handle_toggle_exclusive_vision)
 
     def _handle_menu_transition(self, action_name: str) -> Optional["SceneTransition"]:
@@ -437,6 +442,82 @@ def handle_trigger_ping(
     app.events.schedule(2.0, lambda: _remove_ping(state, token_id))
 
     return None
+
+
+def _catan_manager(app: "InteractiveApp", state: Optional["WorldState"]):
+    """The Catan manager with the current map's board loaded, or None (with a notification)."""
+    if state is None:
+        return None
+    manager = app.catan_manager
+    if not manager.load_for_map(app.current_map_path):
+        app.notifications.add_notification("No Catan board found next to the current map.")
+        return None
+    return manager
+
+
+def _catan_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    raw = payload.get("payload")
+    data = json.loads(raw) if isinstance(raw, str) else raw
+    if not isinstance(data, dict):
+        raise ValueError("Invalid Catan payload")
+    return data
+
+
+def _run_catan(app: "InteractiveApp", payload: dict[str, Any], state, method: str, *keys: str):
+    """Runs a manager method with values from the JSON payload, reporting errors on screen."""
+    manager = _catan_manager(app, state)
+    if manager is None:
+        return None
+    try:
+        data = _catan_payload(payload)
+        getattr(manager, method)(state, *(data[key] for key in keys))
+    except (ValueError, KeyError, TypeError) as exc:
+        logging.warning("%s rejected: %s", method, exc)
+        app.notifications.add_notification(f"Catan: {exc}")
+    return None
+
+
+def handle_catan_roll(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Rolls the dice, or applies physical dice given as payload "3,4"."""
+    manager = _catan_manager(app, state)
+    if manager is None:
+        return None
+
+    dice = None
+    raw = payload.get("payload")
+    if raw:
+        try:
+            first, second = (int(part) for part in str(raw).split(","))
+            if 1 <= first <= 6 and 1 <= second <= 6:
+                dice = (first, second)
+        except ValueError:
+            logging.warning("CATAN_ROLL: ignoring invalid dice payload %r", raw)
+
+    manager.roll(state, dice)
+    return None
+
+
+def handle_catan_build(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Places a settlement or upgrades it. Payload: {"player": "rojo", "vertex": [[q, r] x3]}."""
+    return _run_catan(app, payload, state, "build", "player", "vertex")
+
+
+def handle_catan_remove(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Removes a building. Payload: {"vertex": [[q, r] x3]}."""
+    return _run_catan(app, payload, state, "remove", "vertex")
+
+
+def handle_catan_robber(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Moves the robber. Payload: {"tile": [q, r]}."""
+    return _run_catan(app, payload, state, "move_robber", "tile")
 
 
 def _remove_ping(state: "WorldState", token_id: str):

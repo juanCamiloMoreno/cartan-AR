@@ -115,6 +115,33 @@ export interface VisibilityBlocker {
   points: [number, number][];
 }
 
+export interface CatanBoardGeometry {
+  width: number;
+  height: number;
+  size: number;
+  tiles: {
+    q: number;
+    r: number;
+    resource: string;
+    number: number | null;
+    x: number;
+    y: number;
+    corners: number[][];
+  }[];
+  vertices: { id: [number, number][]; x: number; y: number }[];
+}
+
+export interface CatanState {
+  dice: [number, number] | null;
+  total: number | null;
+  producing: { q: number; r: number; resource: string; number: number }[];
+  robber: [number, number];
+  payouts: Record<string, Record<string, number>>;
+  buildings: { vertex: [number, number][]; player: string; kind: 'settlement' | 'city' }[];
+  players: string[];
+  board: CatanBoardGeometry | null;
+}
+
 export interface WorldState {
   scene: SceneId | string;
   fps: number;
@@ -127,6 +154,7 @@ export interface WorldState {
   grid_type?: GridType;
   grid_overlay_visible?: boolean;
   grid_overlay_color?: string;
+  catan?: CatanState | null;
   [key: string]: unknown;
 }
 

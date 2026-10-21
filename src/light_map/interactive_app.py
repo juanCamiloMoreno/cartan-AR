@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from light_map.catan.manager import CatanManager
 from light_map.core.analytics import AnalyticsManager
 from light_map.core.common_types import (
     AppConfig,
@@ -139,6 +140,7 @@ class InteractiveApp:
         # Initialize Specialized Managers
         self.persistence_service = PersistenceService(self)
         self.environment_manager = EnvironmentManager(self.app_context, self.state)
+        self.catan_manager = CatanManager()
 
         # Build scene class map using local names (to support test patching)
         scene_classes = {

@@ -269,10 +269,14 @@ class ViewingScene(BaseMapScene):
             self.context.inspected_token_id = None
             self.context.inspected_token_mask = None
 
+        if Action.CATAN_ROLL_REQUEST in actions:
+            self._queue_catan_roll()
+
         dt = current_time - self.last_update_time if self.last_update_time > 0 else 0.033
         self.last_update_time = current_time
 
         if not inputs:
+            self.context.events.cancel(TimerKey.CATAN_ROLL_HOLD)
             self.summon_gesture_start_time = 0.0
             self._update_dwell_and_linger(GestureType.NONE, None, dt, current_time)
             return None
@@ -295,6 +299,8 @@ class ViewingScene(BaseMapScene):
             if stype == SelectionType.TOKEN and sid:
                 return SceneTransition(SceneId.EXCLUSIVE_VISION, payload={"token_id": int(sid)})
             self.context.events.cancel(TimerKey.INSPECTION_LINGER)
+
+        self._update_catan_roll_gesture(primary_gesture)
 
         # Multi-step menu summoning (Step 1: VICTORY for 2s, Step 2: SHAKA for 2s)
         is_step1_ready = self.context.events.has_event(TimerKey.SUMMON_MENU)
@@ -324,6 +330,33 @@ class ViewingScene(BaseMapScene):
             self.context.events.cancel(TimerKey.SUMMON_MENU_STEP_2)
 
         return None
+
+    def _update_catan_roll_gesture(self, gesture: GestureType) -> None:
+        """Holding the roll gesture throws the Catan dice (once per cooldown)."""
+        events = self.context.events
+        if gesture != config_vars.CATAN_ROLL_GESTURE:
+            events.cancel(TimerKey.CATAN_ROLL_HOLD)
+            return
+        if events.has_event(TimerKey.CATAN_ROLL_HOLD) or events.has_event(
+            TimerKey.CATAN_ROLL_COOLDOWN
+        ):
+            return
+        events.schedule(
+            config_vars.CATAN_ROLL_HOLD_TIME,
+            lambda: Action.CATAN_ROLL_REQUEST,
+            key=TimerKey.CATAN_ROLL_HOLD,
+        )
+
+    def _queue_catan_roll(self) -> None:
+        """Asks the app to roll the dice; the dispatcher routes it to the Catan manager."""
+        state = getattr(self.context, "state", None)
+        if state is not None:
+            state.pending_actions.append({"action": "CATAN_ROLL"})
+        self.context.events.schedule(
+            config_vars.CATAN_ROLL_COOLDOWN,
+            lambda: None,
+            key=TimerKey.CATAN_ROLL_COOLDOWN,
+        )
 
     def _on_summon_step1_complete(self):
         """Called when Step 1 of menu summoning is complete."""

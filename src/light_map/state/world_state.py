@@ -93,6 +93,7 @@ class WorldState:
         self._active_pings_atom = VersionedAtom({}, "active_pings")
         self._fps_atom = VersionedAtom(0.0, "fps")
         self._config_version_atom = VersionedAtom(0, "config")
+        self._catan_atom = VersionedAtom(None, "catan")
 
         # Lifecycle
         self.is_running = True
@@ -356,6 +357,22 @@ class WorldState:
     @property
     def tactical_bonuses_version(self) -> int:
         return self._tactical_bonuses_atom.timestamp
+
+    @property
+    def catan(self) -> Any:
+        """Latest Catan roll snapshot (CatanView) or None. Written by CatanManager."""
+        return self._catan_atom.value
+
+    @catan.setter
+    def catan(self, value: Any):
+        # Always bump: a repeated roll with the same dice must still refresh the layer.
+        # The clock can be coarse (1 ms on Windows), so keep versions strictly increasing.
+        ts = max(time.monotonic_ns(), self._catan_atom.timestamp + 1)
+        self._catan_atom.update(value, force_timestamp=ts)
+
+    @property
+    def catan_version(self) -> int:
+        return self._catan_atom.timestamp
 
     @property
     def config_version(self) -> int:
@@ -883,6 +900,8 @@ class WorldState:
             "active_pings": self.active_pings,
             "system_time": self.system_time,
             "system_time_version": self.system_time_version,
+            "catan": self.catan.to_dict() if self.catan is not None else None,
+            "catan_version": self.catan_version,
             "effective_show_tokens": self.effective_show_tokens,
             "projector_pose": self.projector_pose.to_list(),
             "tactical": {

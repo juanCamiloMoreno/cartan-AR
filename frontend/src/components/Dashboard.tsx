@@ -6,9 +6,11 @@ import { MapLibrary } from './MapLibrary';
 import { CalibrationWizard } from './CalibrationWizard';
 import { TokenLibrary } from './TokenLibrary';
 import { SettingsModal } from './SettingsModal';
+import { CatanPanel } from './CatanPanel';
+import { CatanBoard } from './CatanBoard';
 import { injectAction, interactMenu } from '../services/api';
 
-type ActiveTab = 'schematic' | 'calibration' | 'library';
+type ActiveTab = 'schematic' | 'calibration' | 'library' | 'catan';
 
 export const Dashboard = () => {
   const { isConnected, world, tokens, menu } = useSystemState();
@@ -79,6 +81,16 @@ export const Dashboard = () => {
               Schematic View
             </button>
             <button
+              onClick={() => setActiveTab('catan')}
+              className={`text-left px-3 py-2 rounded-md transition-colors ${
+                activeTab === 'catan'
+                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Catan Board
+            </button>
+            <button
               onClick={() => setActiveTab('calibration')}
               className={`text-left px-3 py-2 rounded-md transition-colors ${
                 activeTab === 'calibration'
@@ -118,6 +130,9 @@ export const Dashboard = () => {
                 <span className="text-gray-500">Tokens:</span> {tokens?.length || 0}
               </p>
             </div>
+          </div>
+          <div className="mb-6">
+            <CatanPanel catan={world?.catan} />
           </div>
           <div className="mb-6">
             <MapLibrary />
@@ -160,6 +175,13 @@ export const Dashboard = () => {
             <h2 className="mb-4 text-xl font-semibold text-gray-800">Schematic View</h2>
             <div className="flex-1 min-h-0 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
               <SchematicCanvas>{/* Layers will be added here */}</SchematicCanvas>
+            </div>
+          </>
+        ) : activeTab === 'catan' ? (
+          <>
+            <h2 className="mb-4 text-xl font-semibold text-gray-800">Catan Board</h2>
+            <div className="flex-1 min-h-0 bg-white rounded-lg shadow-sm border border-gray-200 p-4 overflow-auto">
+              <CatanBoard catan={world?.catan} />
             </div>
           </>
         ) : activeTab === 'calibration' ? (

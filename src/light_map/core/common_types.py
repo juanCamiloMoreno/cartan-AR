@@ -293,6 +293,8 @@ class TimerKey(StrEnum):
     CALIBRATION_STAGE = "calibration_stage"
     NOTIFICATION_EXPIRY = "notification_expiry"
     GESTURE_TIMEOUT = "gesture_timeout"
+    CATAN_ROLL_HOLD = "catan_roll_hold"
+    CATAN_ROLL_COOLDOWN = "catan_roll_cooldown"
 
 
 @dataclass(frozen=True)
@@ -388,6 +390,9 @@ class Action(StrEnum):
     DWELL_TRIGGER = "DWELL_TRIGGER"
     TRIGGER_PING = "TRIGGER_PING"
     TOGGLE_EXCLUSIVE_VISION = "TOGGLE_EXCLUSIVE_VISION"
+    # Sent by the roll gesture; distinct from the "CATAN_ROLL" app action it queues, which the
+    # dispatcher hands back to the scene after running it.
+    CATAN_ROLL_REQUEST = "CATAN_ROLL_REQUEST"
 
 
 @dataclass

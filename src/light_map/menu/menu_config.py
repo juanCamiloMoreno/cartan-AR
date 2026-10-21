@@ -10,6 +10,8 @@ PRIMING_TIME: float = 0.8  # Seconds to hold gesture to trigger action
 SUMMON_TIME: float = 1.0  # Seconds to hold summon gesture to open menu
 SUMMON_STEP_1_TIME: float = 2.0  # Seconds for first gesture
 SUMMON_STEP_2_TIME: float = 2.0  # Seconds for second gesture
+CATAN_ROLL_HOLD_TIME: float = 1.0  # Seconds to hold the roll gesture to throw the dice
+CATAN_ROLL_COOLDOWN: float = 4.0  # Seconds before another gesture roll is accepted
 ZOOM_DELAY: float = 0.5  # Seconds to hold two-hand pointing to enter zoom mode
 MODE_TRANSITION_DELAY: float = 0.5  # Seconds to wait after mode switch before processing input
 
@@ -25,6 +27,7 @@ SUMMON_STEP_1_GESTURE = GestureType.VICTORY
 SUMMON_STEP_2_GESTURE = GestureType.SHAKA
 ZOOM_GESTURE = GestureType.POINTING  # Both hands must be this
 PAN_GESTURE = GestureType.CLOSED_FIST
+CATAN_ROLL_GESTURE = GestureType.ROCK  # Index + pinky, held, throws the Catan dice
 
 
 # --- Colors (BGR) ---

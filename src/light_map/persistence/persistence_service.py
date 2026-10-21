@@ -4,6 +4,7 @@ import os
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
+from light_map.catan.layout import sidecar_path
 from light_map.core.common_types import MapRenderState, SessionData, ViewportState
 from light_map.map.session_manager import SessionManager
 from light_map.rendering.svg.loader import SVGLoader
@@ -61,9 +62,16 @@ class PersistenceService:
                     entry.scale_factor_1to1 = (entry.physical_unit_inches * ppi) / spacing
                 self.map_config.save()
 
+        # Catan boards have no hidden areas: the fog of war would black out the whole map.
+        if os.path.exists(sidecar_path(filename)):
+            entry.fow_disabled = True
+
         # setup Visibility Engine and layers (Delegated to app for now)
         self.app._rebuild_visibility_stack(entry)
         self.state.fow_disabled = entry.fow_disabled
+
+        # Publish the Catan board (if this map has one) so the dashboard can show it.
+        self.app.catan_manager.sync(self.state, filename)
 
         # Restore persistent states
         if self.app.fow_manager:
