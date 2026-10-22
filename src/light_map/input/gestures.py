@@ -18,6 +18,32 @@ from light_map.core.constants import (
 )
 
 
+# A finger counts as straight when the angle at its PIP joint (MCP - PIP - tip) is at least this.
+# The distance-from-wrist check alone calls a finger "extended" when it is curled toward the
+# camera, which a low camera over the table sees all the time.
+STRAIGHT_FINGER_MIN_ANGLE = 140.0
+# Landmarks are normalized to the image, so x and z must be stretched to the 16:9 frame
+# before angles mean anything.
+FRAME_ASPECT = 16 / 9
+_FINGER_MCP = {"Index": 5, "Middle": 9, "Ring": 13, "Pinky": 17}
+
+
+def _pip_angle(landmarks, mcp_idx, pip_idx, tip_idx) -> float:
+    """Angle in degrees at the PIP joint between the proximal and distal bones."""
+
+    def point(i):
+        p = landmarks[i]
+        return np.array([p.x * FRAME_ASPECT, p.y, getattr(p, "z", 0.0) * FRAME_ASPECT], dtype=float)
+
+    v1 = point(mcp_idx) - point(pip_idx)
+    v2 = point(tip_idx) - point(pip_idx)
+    norm = np.linalg.norm(v1) * np.linalg.norm(v2)
+    if norm == 0:
+        # No bone to measure (missing landmarks): do not veto the distance check.
+        return 180.0
+    return float(np.degrees(np.arccos(np.clip(np.dot(v1, v2) / norm, -1.0, 1.0))))
+
+
 def is_finger_extended(landmarks, finger_name, hand_label="Right"):
     """
     Determines if a finger is extended based on landmark positions.
@@ -73,7 +99,10 @@ def is_finger_extended(landmarks, finger_name, hand_label="Right"):
         d_tip = np.linalg.norm(np.array([tip.x, tip.y]) - np.array([wrist.x, wrist.y]))
         d_pip = np.linalg.norm(np.array([pip.x, pip.y]) - np.array([wrist.x, wrist.y]))
 
-        return d_tip > d_pip
+        straight = _pip_angle(landmarks, _FINGER_MCP[finger_name], pip_idx, tip_idx) >= (
+            STRAIGHT_FINGER_MIN_ANGLE
+        )
+        return bool(d_tip > d_pip) and straight
 
 
 def detect_gesture(landmarks, handedness_label):

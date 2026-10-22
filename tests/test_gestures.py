@@ -18,6 +18,7 @@ def mock_hand():
 def test_is_finger_extended_index_open(mock_hand):
     # Simulate an open index finger (pointing up)
     mock_hand[0] = MockLandmark(0.5, 1.0)  # Wrist
+    mock_hand[5] = MockLandmark(0.5, 0.8)  # Index MCP (knuckle)
     mock_hand[6] = MockLandmark(0.5, 0.6)  # Index PIP
     mock_hand[8] = MockLandmark(0.5, 0.4)  # Index Tip (Higher than PIP)
 
@@ -46,8 +47,9 @@ def test_detect_gesture_open_palm(mock_hand):
     # Fingers: Extended (Tip higher than PIP)
     finger_indices = [(8, 6), (12, 10), (16, 14), (20, 18)]
     for tip_idx, pip_idx in finger_indices:
-        mock_hand[tip_idx] = MockLandmark(0.5, 0.1)  # Far Up
-        mock_hand[pip_idx] = MockLandmark(0.5, 0.5)  # Mid
+        x = 0.9 if tip_idx == 20 else 0.5  # the pinky stands over its own MCP
+        mock_hand[tip_idx] = MockLandmark(x, 0.1)  # Far Up
+        mock_hand[pip_idx] = MockLandmark(x, 0.5)  # Mid
 
     assert detect_gesture(mock_hand, "Right") == "Open Palm"
 
@@ -87,8 +89,9 @@ def test_detect_gesture_gun(mock_hand):
 
     # Others: Closed
     for tip_idx, pip_idx in [(12, 10), (16, 14), (20, 18)]:
-        mock_hand[tip_idx] = MockLandmark(0.5, 0.9)
-        mock_hand[pip_idx] = MockLandmark(0.5, 0.5)
+        x = 0.9 if tip_idx == 20 else 0.5
+        mock_hand[tip_idx] = MockLandmark(x, 0.9)
+        mock_hand[pip_idx] = MockLandmark(x, 0.5)
 
     assert detect_gesture(mock_hand, "Right") == "Gun"
 
@@ -109,8 +112,9 @@ def test_detect_gesture_pointing(mock_hand):
 
     # Others: Closed
     for tip_idx, pip_idx in [(12, 10), (16, 14), (20, 18)]:
-        mock_hand[tip_idx] = MockLandmark(0.5, 0.9)
-        mock_hand[pip_idx] = MockLandmark(0.5, 0.5)
+        x = 0.9 if tip_idx == 20 else 0.5
+        mock_hand[tip_idx] = MockLandmark(x, 0.9)
+        mock_hand[pip_idx] = MockLandmark(x, 0.5)
 
     assert detect_gesture(mock_hand, "Right") == "Pointing"
 
@@ -131,7 +135,50 @@ def test_detect_gesture_tucked_thumb_not_gun(mock_hand):
 
     # Others: Closed
     for tip_idx, pip_idx in [(12, 10), (16, 14), (20, 18)]:
-        mock_hand[tip_idx] = MockLandmark(0.5, 0.9)
-        mock_hand[pip_idx] = MockLandmark(0.5, 0.5)
+        x = 0.9 if tip_idx == 20 else 0.5
+        mock_hand[tip_idx] = MockLandmark(x, 0.9)
+        mock_hand[pip_idx] = MockLandmark(x, 0.5)
+
+    assert detect_gesture(mock_hand, "Right") == "Pointing"
+
+
+def test_finger_curled_toward_the_camera_is_not_extended(mock_hand):
+    # The tip is farther from the wrist than the PIP joint (old rule: "extended"), but the
+    # finger is bent at the PIP joint: the bone from the knuckle goes up, the tip bends sideways.
+    mock_hand[0] = MockLandmark(0.5, 1.0)  # Wrist
+    mock_hand[5] = MockLandmark(0.5, 0.6)  # Index MCP
+    mock_hand[6] = MockLandmark(0.5, 0.5)  # Index PIP
+    mock_hand[8] = MockLandmark(0.58, 0.46)  # Index tip, bent
+
+    assert not is_finger_extended(mock_hand, "Index")
+
+
+def test_straight_finger_is_extended_with_its_knuckle_known(mock_hand):
+    mock_hand[0] = MockLandmark(0.5, 1.0)
+    mock_hand[5] = MockLandmark(0.5, 0.6)
+    mock_hand[6] = MockLandmark(0.5, 0.5)
+    mock_hand[8] = MockLandmark(0.5, 0.3)
+
+    assert is_finger_extended(mock_hand, "Index")
+
+
+def test_curled_middle_ring_pinky_make_a_pointing_hand(mock_hand):
+    # Real hands seen from a low camera: the folded fingers have their tips farther from the
+    # wrist than their PIP joints, so only the bend at the PIP tells them apart.
+    mock_hand[0] = MockLandmark(0.5, 1.0)
+    mock_hand[4] = MockLandmark(0.55, 0.62)  # Thumb tucked
+    mock_hand[3] = MockLandmark(0.5, 0.65)
+    for mcp, pip, tip, x in (
+        (5, 6, 8, 0.45),
+        (9, 10, 12, 0.5),
+        (13, 14, 16, 0.55),
+        (17, 18, 20, 0.6),
+    ):
+        mock_hand[mcp] = MockLandmark(x, 0.6)
+        mock_hand[pip] = MockLandmark(x, 0.5)
+        if mcp == 5:
+            mock_hand[tip] = MockLandmark(x, 0.25)  # straight index
+        else:
+            mock_hand[tip] = MockLandmark(x + 0.07, 0.46)  # folded, bent at the PIP
 
     assert detect_gesture(mock_hand, "Right") == "Pointing"
