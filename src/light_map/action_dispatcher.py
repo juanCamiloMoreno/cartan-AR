@@ -87,6 +87,12 @@ class ActionDispatcher:
         self.register("CATAN_CARDS", handle_catan_cards)
         self.register("CATAN_PLAYERS", handle_catan_players)
         self.register("CATAN_STATS_MODE", handle_catan_stats_mode)
+        self.register("CATAN_NEW_GAME", handle_catan_new_game)
+        self.register("CATAN_FREE_PLAY", handle_catan_free_play)
+        self.register("CATAN_END_TURN", handle_catan_end_turn)
+        self.register("CATAN_DISCARD", handle_catan_discard)
+        self.register("CATAN_STEAL", handle_catan_steal)
+        self.register("CATAN_BANK", handle_catan_bank)
         self.register("TOGGLE_EXCLUSIVE_VISION", handle_toggle_exclusive_vision)
 
     def _handle_menu_transition(self, action_name: str) -> Optional["SceneTransition"]:
@@ -461,7 +467,9 @@ def _catan_manager(app: "InteractiveApp", state: Optional["WorldState"]):
 
 def _catan_payload(payload: dict[str, Any]) -> dict[str, Any]:
     raw = payload.get("payload")
-    data = json.loads(raw) if isinstance(raw, str) else raw
+    data = json.loads(raw) if isinstance(raw, str) and raw else raw
+    if data is None:
+        data = {}  # actions without arguments (end the turn, leave the game)
     if not isinstance(data, dict):
         raise ValueError("Invalid Catan payload")
     return data
@@ -499,6 +507,9 @@ def handle_catan_roll(
         except ValueError:
             logging.warning("CATAN_ROLL: ignoring invalid dice payload %r", raw)
 
+    if manager.game_active and manager.board.game.phase != "roll":
+        logging.info("CATAN_ROLL ignored: not the roll phase (%s)", manager.board.game.phase)
+        return None
     manager.roll(state, dice)
     return None
 
@@ -551,6 +562,48 @@ def handle_catan_stats_mode(
     """Sets a corner panel mode. Payload: {"player": "rojo" | "all", "mode": "simple" |
     "resources" | "toggle"}."""
     return _run_catan(app, payload, state, "set_stats_mode", "player", "mode")
+
+
+def handle_catan_new_game(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Starts a game with turns and costs. Payload: {"players": 3}."""
+    return _run_catan(app, payload, state, "new_game", "players")
+
+
+def handle_catan_free_play(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Leaves the game and goes back to the sandbox (no turns, no costs)."""
+    return _run_catan(app, payload, state, "free_play")
+
+
+def handle_catan_end_turn(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Passes the turn to the next player."""
+    return _run_catan(app, payload, state, "end_turn")
+
+
+def handle_catan_discard(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Discards after a 7. Payload: {"player": "azul", "cards": {"wood": 2, "ore": 1}}."""
+    return _run_catan(app, payload, state, "discard", "player", "cards")
+
+
+def handle_catan_steal(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Steals a random card from a victim. Payload: {"victim": "azul"}."""
+    return _run_catan(app, payload, state, "steal", "victim")
+
+
+def handle_catan_bank(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Four cards of one kind for one of another. Payload: {"player", "give", "get"}."""
+    return _run_catan(app, payload, state, "bank_trade", "player", "give", "get")
 
 
 def _remove_ping(state: "WorldState", token_id: str):

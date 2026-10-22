@@ -8,7 +8,7 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
-from light_map.catan.board import DIRECTIONS, neighbors
+from light_map.catan.board import edge_vertices
 
 
 SIZE = 70  # hex circumradius; the board fits a 1536x864 screen
@@ -52,13 +52,8 @@ def vertex_position(vertex) -> tuple[float, float]:
 
 def edge_endpoints(edge) -> tuple[tuple[float, float], tuple[float, float]]:
     """The two vertex positions at the ends of an edge (shared by two adjacent tiles)."""
-    a, b = sorted(edge)
-    ends = [
-        vertex_position(frozenset({a, b, (a[0] + dq, a[1] + dr)}))
-        for dq, dr in DIRECTIONS
-        if neighbors((a[0] + dq, a[1] + dr), b)
-    ]
-    return ends[0], ends[1]
+    first, second = edge_vertices(edge)
+    return vertex_position(first), vertex_position(second)
 
 
 # Player panels drawn in the corners of the projection (screen pixels).

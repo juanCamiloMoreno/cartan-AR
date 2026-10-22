@@ -29,6 +29,15 @@ Coord = tuple[int, int]
 Vertex = frozenset
 Edge = frozenset  # the two adjacent tiles that share the edge
 
+COSTS: dict[str, dict[str, int]] = {
+    "road": {"wood": 1, "brick": 1},
+    "settlement": {"wood": 1, "brick": 1, "sheep": 1, "wheat": 1},
+    "city": {"wheat": 2, "ore": 3},
+}
+PIECE_LIMITS = {"road": 15, "settlement": 5, "city": 4}
+WIN_POINTS = 10
+BANK_RATE = 4  # cards of one kind for one of another
+
 
 class Building(Enum):
     SETTLEMENT = 1
@@ -93,6 +102,32 @@ def edge_from_list(cells: list[list[int]]) -> Edge:
     return edge
 
 
+def edge_vertices(edge: Edge) -> tuple[Vertex, Vertex]:
+    """The two vertices at the ends of an edge."""
+    a, b = sorted(edge)
+    ends = [
+        frozenset({a, b, (a[0] + dq, a[1] + dr)})
+        for dq, dr in DIRECTIONS
+        if neighbors((a[0] + dq, a[1] + dr), b)
+    ]
+    return ends[0], ends[1]
+
+
+def vertex_edges(vertex: Vertex) -> list[Edge]:
+    """The three edges that meet at a vertex."""
+    a, b, c = sorted(vertex)
+    return [frozenset({a, b}), frozenset({a, c}), frozenset({b, c})]
+
+
+def vertex_neighbors(vertex: Vertex) -> list[Vertex]:
+    """The three vertices one edge away."""
+    result = []
+    for edge in vertex_edges(vertex):
+        first, second = edge_vertices(edge)
+        result.append(second if first == vertex else first)
+    return result
+
+
 def roll_dice(rng: random.Random | None = None) -> tuple[int, int]:
     rng = rng or random
     return rng.randint(1, 6), rng.randint(1, 6)
@@ -112,6 +147,9 @@ class Board:
         self.players: list[str] = list(PLAYER_NAMES)
         self.hands: dict[str, Counter] = {}
         self.stats_modes: dict[str, str] = {}
+        from light_map.catan.game import GameState  # game.py imports this module
+
+        self.game = GameState()
 
     @classmethod
     def random(cls, rng: random.Random | None = None) -> Board:
@@ -151,6 +189,7 @@ class Board:
             "players": list(self.players),
             "hands": {p: {r: n for r, n in h.items() if n} for p, h in self.hands.items()},
             "stats_modes": dict(self.stats_modes),
+            "game": self.game.to_dict(),
         }
 
     @classmethod
@@ -170,6 +209,10 @@ class Board:
         board.stats_modes = {
             p: m for p, m in data.get("stats_modes", {}).items() if m in STATS_MODES
         }
+        if "game" in data:
+            from light_map.catan.game import GameState
+
+            board.game = GameState.from_dict(data["game"])
         return board
 
     def build(self, vertex: Vertex, player: str, kind: Building) -> None:
@@ -311,3 +354,79 @@ class Board:
             "hand": {r: hand.get(r, 0) for r in RESOURCE_NAMES},
             "mode": self.stats_mode(player),
         }
+
+    # Rules: costs, placement and scoring
+
+    def piece_count(self, player: str, kind: str) -> int:
+        if kind == "road":
+            return sum(1 for owner in self.roads.values() if owner == player)
+        wanted = Building.SETTLEMENT if kind == "settlement" else Building.CITY
+        return sum(1 for owner, k in self.buildings.values() if owner == player and k is wanted)
+
+    def check_piece_available(self, player: str, kind: str) -> str | None:
+        if self.piece_count(player, kind) >= PIECE_LIMITS[kind]:
+            return f"No {kind}s left to place"
+        return None
+
+    def settlement_error(self, vertex: Vertex, player: str, setup: bool = False) -> str | None:
+        """Why the player cannot place a settlement here, or None if they can."""
+        if vertex not in self.all_vertices():
+            return "That vertex is not on the board"
+        if vertex in self.buildings:
+            return "Vertex is already occupied"
+        if any(n in self.buildings for n in vertex_neighbors(vertex)):
+            return "Too close to another settlement (the distance rule)"
+        if not setup and not any(self.roads.get(e) == player for e in vertex_edges(vertex)):
+            return "A settlement must be connected to one of your roads"
+        return self.check_piece_available(player, "settlement")
+
+    def city_error(self, vertex: Vertex, player: str) -> str | None:
+        if self.buildings.get(vertex) != (player, Building.SETTLEMENT):
+            return "A city must replace your own settlement"
+        return self.check_piece_available(player, "city")
+
+    def road_error(self, edge: Edge, player: str, must_touch: Vertex | None = None) -> str | None:
+        """Why the player cannot place a road here, or None.
+
+        must_touch is used in the setup phase, where the road has to start at the settlement
+        that was just placed.
+        """
+        if edge not in self.all_edges():
+            return "That edge is not on the board"
+        if edge in self.roads:
+            return "Edge is already occupied"
+        ends = edge_vertices(edge)
+        if must_touch is not None:
+            if must_touch not in ends:
+                return "The road must start at the settlement you just placed"
+        elif not any(self._connects(v, edge, player) for v in ends):
+            return "A road must connect to your roads or buildings"
+        return self.check_piece_available(player, "road")
+
+    def _connects(self, vertex: Vertex, edge: Edge, player: str) -> bool:
+        owner = self.buildings.get(vertex)
+        if owner is not None:
+            return owner[0] == player
+        return any(self.roads.get(e) == player for e in vertex_edges(vertex) if e != edge)
+
+    def victory_points(self, player: str) -> int:
+        return self.piece_count(player, "settlement") + 2 * self.piece_count(player, "city")
+
+    def can_afford(self, player: str, cost: dict[str, int]) -> bool:
+        hand = self.hands.get(player, Counter())
+        return all(hand.get(r, 0) >= n for r, n in cost.items())
+
+    def pay(self, player: str, cost: dict[str, int]) -> None:
+        if not self.can_afford(player, cost):
+            raise ValueError("Not enough cards")
+        for resource, amount in cost.items():
+            self.add_cards(player, resource, -amount)
+
+    def tile_resources_at(self, vertex: Vertex) -> Counter:
+        """One card per land tile around a vertex (what a second setup settlement pays)."""
+        gains: Counter = Counter()
+        for cell in vertex:
+            tile = self.tiles.get(cell)
+            if tile is not None and tile.resource != "desert":
+                gains[tile.resource] += 1
+        return gains

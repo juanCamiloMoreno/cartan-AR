@@ -8,6 +8,7 @@ import os
 import random
 
 from light_map.catan.board import (
+    COSTS,
     Board,
     Building,
     edge_from_list,
@@ -16,6 +17,7 @@ from light_map.catan.board import (
     vertex_from_list,
     vertex_to_list,
 )
+from light_map.catan.game import FREE, Game
 from light_map.catan.layout import (
     BOARD_HEIGHT,
     BOARD_WIDTH,
@@ -77,6 +79,29 @@ class CatanManager:
         except OSError as exc:
             logging.error("CatanManager: could not save %s: %s", self._sidecar, exc)
 
+    @property
+    def game(self) -> Game:
+        return Game(self.board, self.rng)
+
+    @property
+    def game_active(self) -> bool:
+        return self.board is not None and self.board.game.phase != FREE
+
+    @staticmethod
+    def _game_view(game: Game) -> dict:
+        state = game.state
+        return {
+            "phase": state.phase,
+            "current_player": game.current_player,
+            "turn": state.turn,
+            "setup_step": state.setup_step,
+            "discards": dict(state.discards),
+            "victims": list(state.victims),
+            "winner": state.winner,
+            "hint": game.hint(),
+            "costs": COSTS,
+        }
+
     # Publishing
 
     def _geometry(self) -> dict:
@@ -115,7 +140,9 @@ class CatanManager:
         board = self.board
         if board is None:
             return None
-        total = sum(self.last_dice) if self.last_dice else None
+        game = self.game
+        dice = game.state.last_dice if game.active else self.last_dice
+        total = sum(dice) if dice else None
         producing: tuple[ProducingTile, ...] = ()
         payouts: dict[str, dict[str, int]] = {}
         if total is not None:
@@ -127,7 +154,7 @@ class CatanManager:
             payouts = {p: dict(g) for p, g in board.production(total).items()}
         view = CatanView(
             robber=board.robber,
-            dice=self.last_dice,
+            dice=dice,
             total=total,
             producing=producing,
             payouts=payouts,
@@ -137,6 +164,7 @@ class CatanManager:
             ),
             board=self._geometry(),
             players=tuple(board.players),
+            game=self._game_view(game),
             roads=tuple(RoadView(e, player) for e, player in board.roads.items()),
             stats={p: board.player_stats(p) for p in board.players},
         )
@@ -149,9 +177,12 @@ class CatanManager:
         """Rolls (or applies physical dice) and publishes which tiles produce."""
         if self.board is None:
             return None
-        self.last_dice = dice or roll_dice(self.rng)
-        # Production goes straight to the players' hands (fix it by hand if a roll was a mistake).
-        self.board.collect(self.board.production(sum(self.last_dice)))
+        if self.game_active:
+            self.game.roll(dice)
+        else:
+            self.last_dice = dice or roll_dice(self.rng)
+            # Production goes straight to the hands (fix it by hand if a roll was a mistake).
+            self.board.collect(self.board.production(sum(self.last_dice)))
         self._save()
         return self.publish(state)
 
@@ -160,6 +191,11 @@ class CatanManager:
         vertex = vertex_from_list(vertex_cells)
         if vertex not in self.board.all_vertices():
             raise ValueError("That vertex is not on the board")
+        if self.game_active:
+            self.game.build(player, vertex)
+            self._save()
+            self.publish(state)
+            return
         current = self.board.buildings.get(vertex)
         if current == (player, Building.SETTLEMENT):
             self.board.build(vertex, player, Building.CITY)
@@ -171,18 +207,27 @@ class CatanManager:
         self.publish(state)
 
     def remove(self, state: WorldState, vertex_cells: list[list[int]]) -> None:
+        if self.game_active:
+            raise ValueError("Pieces cannot be removed during a game")
         self.board.remove(vertex_from_list(vertex_cells))
         self._save()
         self.publish(state)
 
     def move_robber(self, state: WorldState, tile: tuple[int, int]) -> None:
-        self.board.move_robber((int(tile[0]), int(tile[1])))
+        target = (int(tile[0]), int(tile[1]))
+        if self.game_active:
+            self.game.move_robber(target)
+        else:
+            self.board.move_robber(target)
         self._save()
         self.publish(state)
 
     def toggle_road(self, state: WorldState, player: str, edge_cells: list[list[int]]) -> None:
-        """Builds a road, or removes the player's own road from that edge."""
-        self.board.toggle_road(edge_from_list(edge_cells), player)
+        """Builds a road, or (in free mode) removes the player's own road from that edge."""
+        if self.game_active:
+            self.game.build_road(player, edge_from_list(edge_cells))
+        else:
+            self.board.toggle_road(edge_from_list(edge_cells), player)
         self._save()
         self.publish(state)
 
@@ -202,5 +247,39 @@ class CatanManager:
         player None (or "all") applies to everybody.
         """
         self.board.set_stats_mode(None if player in (None, "all") else player, mode)
+        self._save()
+        self.publish(state)
+
+    # Turn-based game
+
+    def new_game(self, state: WorldState, players: int) -> None:
+        """Clears the board and starts a game with the turn rules (setup phase first)."""
+        self.game.new_game(int(players))
+        self.last_dice = None
+        self._save()
+        self.publish(state)
+
+    def free_play(self, state: WorldState) -> None:
+        self.game.free_play()
+        self._save()
+        self.publish(state)
+
+    def end_turn(self, state: WorldState) -> None:
+        self.game.end_turn()
+        self._save()
+        self.publish(state)
+
+    def discard(self, state: WorldState, player: str, cards: dict[str, int]) -> None:
+        self.game.discard(player, cards)
+        self._save()
+        self.publish(state)
+
+    def steal(self, state: WorldState, victim: str) -> None:
+        self.game.steal(victim)
+        self._save()
+        self.publish(state)
+
+    def bank_trade(self, state: WorldState, player: str, give: str, get: str) -> None:
+        self.game.bank_trade(player, give, get)
         self._save()
         self.publish(state)
