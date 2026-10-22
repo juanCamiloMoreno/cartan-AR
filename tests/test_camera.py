@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from light_map.vision.infrastructure.camera import Camera
+from light_map.vision.infrastructure.camera import REOPEN_AFTER_FAILED_READS, Camera
 
 
 @pytest.fixture
@@ -99,3 +99,26 @@ def test_camera_pi_pipeline_custom_name(mock_capture, mock_is_pi):
     pipeline = args[0]
     assert "camera-name=custom_camera_device_path" in pipeline
     assert args[1] == cv2.CAP_GSTREAMER
+
+
+def test_camera_reopens_after_a_dead_stream(mock_capture, mock_is_pi):
+    cam = Camera(index=1)
+    mock_capture.return_value.read.return_value = (False, None)
+    for _ in range(REOPEN_AFTER_FAILED_READS - 1):
+        assert cam.read() is None
+    assert mock_capture.call_count == 1
+    assert cam.read() is None
+    assert mock_capture.call_count == 2  # the device was opened again
+
+
+def test_camera_good_frame_resets_the_failure_count(mock_capture, mock_is_pi):
+    cam = Camera(index=1)
+    mock_capture.return_value.read.return_value = (False, None)
+    for _ in range(REOPEN_AFTER_FAILED_READS - 1):
+        cam.read()
+    mock_capture.return_value.read.return_value = (True, "frame")
+    assert cam.read() == "frame"
+    mock_capture.return_value.read.return_value = (False, None)
+    for _ in range(REOPEN_AFTER_FAILED_READS - 1):
+        cam.read()
+    assert mock_capture.call_count == 1

@@ -5,6 +5,9 @@ import cv2
 import numpy as np
 
 
+REOPEN_AFTER_FAILED_READS = 60
+
+
 class Camera:
     """
     A wrapper around cv2.VideoCapture to handle different camera sources
@@ -34,6 +37,7 @@ class Camera:
         self.framerate = framerate
         self.camera_name = camera_name
         self.cap = None
+        self._failed_reads = 0
         self._initialize_camera()
 
     def _is_raspberry_pi(self):
@@ -94,12 +98,27 @@ class Camera:
             frame: The captured frame, or None if error/end of stream.
         """
         if self.cap is None or not self.cap.isOpened():
-            raise RuntimeError("Camera is not open.")
+            self._reopen()
+            return None
 
         ret, frame = self.cap.read()
         if not ret:
+            self._failed_reads += 1
+            if self._failed_reads >= REOPEN_AFTER_FAILED_READS:
+                self._reopen()
             return None
+        self._failed_reads = 0
         return frame
+
+    def _reopen(self):
+        """A USB stream that dies mid-run never recovers by itself: open the device again."""
+        logging.warning("Camera stopped delivering frames; reopening it.")
+        self._failed_reads = 0
+        self.release()
+        try:
+            self._initialize_camera()
+        except RuntimeError:
+            logging.error("Could not reopen the camera; will retry.")
 
     def release(self):
         """Releases the camera resource."""
