@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import random
+import time
 
 from light_map.catan.board import (
     COSTS,
@@ -43,6 +44,7 @@ class CatanManager:
         self._loaded_from: str | None = None
         self._sidecar: str | None = None
         self.report: GenerationReport | None = None
+        self.notice: dict | None = None  # last rejected move, shown on the dashboard
         self.map_dirty = False  # the SVG changed: the app has to reload the map
         self._svg_blank = False
 
@@ -114,6 +116,14 @@ class CatanManager:
             "reveal_done": game.reveal_total()[0],
             "reveal_total": game.reveal_total()[1],
         }
+
+    def notify(self, state: WorldState, text: str) -> None:
+        """Tells the dashboard why a move was refused (the id changes on every message)."""
+        # The clock can be coarse (1 ms on Windows): keep ids strictly increasing.
+        previous = self.notice["id"] if self.notice else 0
+        self.notice = {"id": max(time.monotonic_ns(), previous + 1), "text": text}
+        if self.board is not None:
+            self.publish(state)
 
     # Publishing
 
@@ -199,6 +209,7 @@ class CatanManager:
             players=tuple(board.players),
             game=self._game_view(game),
             generator=self.report.to_dict() if self.report and not hidden else None,
+            notice=self.notice,
             roads=tuple(RoadView(e, player) for e, player in board.roads.items()),
             stats={p: board.player_stats(p) for p in board.players},
         )

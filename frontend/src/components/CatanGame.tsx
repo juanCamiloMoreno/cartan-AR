@@ -39,9 +39,18 @@ export const CatanGame: React.FC<CatanGameProps> = ({ catan }) => {
   const [get, setGet] = useState('ore');
   const [discards, setDiscards] = useState<Record<string, Record<string, number>>>({});
   const [phased, setPhased] = useState(false);
+  const [hiddenNotice, setHiddenNotice] = useState<number | null>(null);
   const [auto, setAuto] = useState(false);
   const [dice, setDice] = useState<Record<string, number>>({});
   const revealing = catan?.game?.phase === 'reveal';
+  const noticeId = catan?.notice?.id ?? null;
+
+  useEffect(() => {
+    // A refused move stays on screen for a few seconds.
+    if (noticeId === null) return;
+    const timer = setTimeout(() => setHiddenNotice(noticeId), 6000);
+    return () => clearTimeout(timer);
+  }, [noticeId]);
 
   useEffect(() => {
     // Automatic reveal: one step every 1.2 seconds, one tile or token at a time.
@@ -89,6 +98,15 @@ export const CatanGame: React.FC<CatanGameProps> = ({ catan }) => {
       </div>
 
       {error && <p className="mb-2 text-xs text-red-600">{error}</p>}
+      {catan.notice && catan.notice.id !== hiddenNotice && (
+        <p
+          role="alert"
+          data-testid="game-notice"
+          className="mb-2 rounded border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700"
+        >
+          {catan.notice.text}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-1 text-xs text-gray-600 mb-2">
         <label className="flex items-center gap-1">

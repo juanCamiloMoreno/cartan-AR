@@ -116,6 +116,19 @@ Gesto / Dashboard ─→ API (/input/action) ─→ ActionDispatcher ─→ Cata
 
 Se respetó la regla del proyecto: la lectura se hace desde `WorldState` y solo el gestor lo escribe.
 
+## Probar sin proyector ni cámara
+
+Para jugar solo con el dashboard (por ejemplo para probar las reglas), la ventana de proyección se
+puede dejar pequeña y la cámara simulada:
+
+```bash
+MOCK_CAMERA=1 LIGHT_MAP_WINDOWED=1 python -m light_map run --maps maps/catan.svg --map maps/catan.svg --no-stereo
+```
+
+(en PowerShell: `$env:MOCK_CAMERA=1; $env:LIGHT_MAP_WINDOWED=1` antes del comando). Después abre
+`http://localhost:8000`. Cuando una jugada no es válida el dashboard muestra el motivo en rojo
+(y también se ve en la proyección).
+
 ## Estado y límites
 
 - Probado: dashboard con clics reales, ventana de proyección en el computador, lógica con pruebas

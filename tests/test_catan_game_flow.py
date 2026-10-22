@@ -13,6 +13,7 @@ from light_map.action_dispatcher import (
     handle_catan_end_turn,
     handle_catan_free_play,
     handle_catan_new_game,
+    handle_catan_order_roll,
     handle_catan_road,
     handle_catan_robber,
     handle_catan_roll,
@@ -127,8 +128,8 @@ def test_illegal_moves_are_reported_on_screen_and_change_nothing(table):
     )  # not azul's turn
     send(handle_catan_end_turn, table)  # not in main phase
     send(handle_catan_roll, table)  # setup phase: silently ignored
-    assert any("rojo's turn" in e for e in errors(table))
-    assert any("Not allowed" in e for e in errors(table))
+    assert any("Es el turno de rojo" in e for e in errors(table))
+    assert any("No se puede hacer eso ahora" in e for e in errors(table))
     assert view(table)["buildings"] == before["buildings"]
     assert view(table)["game"]["phase"] == "setup"
 
@@ -158,7 +159,7 @@ def test_pieces_cannot_be_removed_during_a_game(table):
     play_vertex = vertex_for(table, "rojo")
     send(handle_catan_build, table, player="rojo", vertex=vertex_to_list(play_vertex))
     send(handle_catan_remove, table, vertex=vertex_to_list(play_vertex))
-    assert any("removed during a game" in e for e in errors(table))
+    assert any("No se pueden quitar piezas" in e for e in errors(table))
     assert view(table)["buildings"]
 
 
@@ -196,3 +197,24 @@ def test_a_road_edge_helper_matches_the_geometry(table):
     b = board(table)
     edge = next(iter(b.all_edges()))
     assert len(edge_vertices(edge)) == 2
+
+
+def test_a_refused_move_is_also_published_for_the_dashboard(table):
+    send(handle_catan_new_game, table, players=2)
+    assert view(table)["notice"] is None
+    far_vertex = vertex_for(table, "azul")
+    send(handle_catan_build, table, player="azul", vertex=vertex_to_list(far_vertex))
+    first = view(table)["notice"]
+    assert "Es el turno de rojo" in first["text"]
+    send(handle_catan_end_turn, table)
+    second = view(table)["notice"]
+    assert "No se puede hacer eso ahora" in second["text"]
+    assert second["id"] != first["id"]  # the dashboard can tell it is a new message
+
+
+def test_the_notice_covers_every_kind_of_refusal(table):
+    send(handle_catan_new_game, table, players=2, phased=True)
+    send(handle_catan_order_roll, table, player="naranja", value=3)
+    assert "no tiene que tirar el dado" in view(table)["notice"]["text"]
+    send(handle_catan_roll, table)
+    assert view(table)["notice"]["text"]  # the roll gesture stays silent, so the last one remains

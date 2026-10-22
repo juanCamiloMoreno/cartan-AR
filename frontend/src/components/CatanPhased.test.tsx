@@ -183,3 +183,42 @@ describe('hidden board on the dashboard', () => {
     expect(screen.getByTestId('robber')).toBeInTheDocument();
   });
 });
+
+describe('refused moves', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('shows why a move was refused and hides it after a few seconds', async () => {
+    vi.useFakeTimers();
+    const state = {
+      ...catan(game({ phase: 'main', hidden: false }), false),
+      notice: { id: 11, text: "It is rojo's turn" },
+    };
+    render(<CatanGame catan={state} />);
+    expect(screen.getByTestId('game-notice')).toHaveTextContent("rojo's turn");
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6100);
+    });
+    expect(screen.queryByTestId('game-notice')).toBeNull();
+  });
+
+  it('shows a new message even after an old one was hidden', async () => {
+    vi.useFakeTimers();
+    const base = catan(game({ phase: 'main', hidden: false }), false);
+    const { rerender } = render(
+      <CatanGame catan={{ ...base, notice: { id: 1, text: 'first' } }} />
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6100);
+    });
+    expect(screen.queryByTestId('game-notice')).toBeNull();
+    rerender(<CatanGame catan={{ ...base, notice: { id: 2, text: 'second' } }} />);
+    expect(screen.getByTestId('game-notice')).toHaveTextContent('second');
+  });
+
+  it('shows nothing when there is no notice', () => {
+    render(<CatanGame catan={catan(game({ phase: 'main', hidden: false }), false)} />);
+    expect(screen.queryByTestId('game-notice')).toBeNull();
+  });
+});

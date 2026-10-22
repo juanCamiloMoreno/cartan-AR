@@ -3,6 +3,8 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Optional
 
+from light_map.catan.messages import plain_ascii, spanish
+
 
 if TYPE_CHECKING:
     from light_map.core.scene import SceneTransition, WorldState
@@ -469,6 +471,13 @@ def _catan_manager(app: "InteractiveApp", state: Optional["WorldState"]):
     return manager
 
 
+def _catan_refused(app: "InteractiveApp", manager, state, exc: Exception) -> None:
+    """A move was rejected: show why on the projection and on the dashboard."""
+    text = spanish(str(exc))
+    app.notifications.add_notification(f"Catan: {plain_ascii(text)}")
+    manager.notify(state, text)
+
+
 def _catan_payload(payload: dict[str, Any]) -> dict[str, Any]:
     raw = payload.get("payload")
     data = json.loads(raw) if isinstance(raw, str) and raw else raw
@@ -489,7 +498,7 @@ def _run_catan(app: "InteractiveApp", payload: dict[str, Any], state, method: st
         getattr(manager, method)(state, *(data[key] for key in keys))
     except (ValueError, KeyError, TypeError) as exc:
         logging.warning("%s rejected: %s", method, exc)
-        app.notifications.add_notification(f"Catan: {exc}")
+        _catan_refused(app, manager, state, exc)
     _reload_map_if_needed(app, manager)
     return None
 
@@ -591,7 +600,7 @@ def handle_catan_new_game(
         manager.new_game(state, data["players"], bool(data.get("phased", False)))
     except (ValueError, KeyError, TypeError) as exc:
         logging.warning("new_game rejected: %s", exc)
-        app.notifications.add_notification(f"Catan: {exc}")
+        _catan_refused(app, manager, state, exc)
     _reload_map_if_needed(app, manager)
     return None
 
@@ -643,7 +652,7 @@ def handle_catan_new_board(
         manager.new_board(state, _catan_payload(payload))
     except (ValueError, KeyError, TypeError) as exc:
         logging.warning("new_board rejected: %s", exc)
-        app.notifications.add_notification(f"Catan: {exc}")
+        _catan_refused(app, manager, state, exc)
         return None
     _reload_map_if_needed(app, manager)  # redraw the map with the new tiles
     return None
@@ -662,7 +671,7 @@ def handle_catan_order_roll(
         manager.order_roll(state, data["player"], data.get("value"))
     except (ValueError, KeyError, TypeError) as exc:
         logging.warning("order_roll rejected: %s", exc)
-        app.notifications.add_notification(f"Catan: {exc}")
+        _catan_refused(app, manager, state, exc)
     return None
 
 

@@ -46,6 +46,7 @@ class CatanView:
     stats: dict[str, dict[str, Any]] | None = None
     game: dict[str, Any] | None = None
     generator: dict[str, Any] | None = None
+    notice: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -66,5 +67,6 @@ class CatanView:
             "stats": self.stats or {},
             "game": self.game,
             "generator": self.generator,
+            "notice": self.notice,
             "board": self.board,
         }

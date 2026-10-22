@@ -72,6 +72,11 @@ class ProjectorWindow:
 
         # Create window and set to fullscreen
         cv2.namedWindow(self.name, cv2.WINDOW_NORMAL)
+        if os.environ.get(WINDOWED_ENV):
+            # Development without a projector: a small ordinary window instead of fullscreen.
+            cv2.resizeWindow(self.name, 640, 360)
+            cv2.waitKey(1)
+            return
         rect = screen_rect()
         placed = False
         if rect is not None:
@@ -260,6 +265,7 @@ def setup_logging(level=logging.INFO, log_file: str | None = None):
 
 
 SCREEN_ENV = "LIGHT_MAP_SCREEN"
+WINDOWED_ENV = "LIGHT_MAP_WINDOWED"  # set it to show the projection in a small window
 
 
 def selected_screen() -> int | None:

@@ -216,6 +216,7 @@ export interface CatanState {
   stats?: Record<string, CatanPlayerStats>;
   game?: CatanGameState | null;
   generator?: CatanGenerationReport | null;
+  notice?: { id: number; text: string } | null;
   board: CatanBoardGeometry | null;
 }
 
