@@ -2,7 +2,20 @@ import cv2
 import numpy as np
 
 import light_map.menu.menu_config as config_vars
-from light_map.catan.layout import cell_at_world, hex_corners, panel_at, panel_rect
+from light_map.catan.aim import (
+    BUILD_GESTURE,
+    BuildAim,
+    Spot,
+    spot_position,
+    what_it_builds,
+)
+from light_map.catan.layout import (
+    cell_at_world,
+    edge_endpoints,
+    hex_corners,
+    panel_at,
+    panel_rect,
+)
 from light_map.catan.view import CatanView
 from light_map.core.common_types import GestureType, ImagePatch, Layer
 from light_map.state.world_state import WorldState
@@ -39,6 +52,8 @@ class HandFeedbackLayer(Layer):
         self.height = height
         self.map_system = map_system
         self._hold_started: dict[tuple, float] = {}
+        self._aim = BuildAim()
+        self._aimed: Spot | None = None
 
     def get_current_version(self) -> int:
         if self.state is None:
@@ -49,6 +64,10 @@ class HandFeedbackLayer(Layer):
         """(what the hold triggers, the target) for a hand that holds an action gesture."""
         if hand.gesture == config_vars.CATAN_ROLL_GESTURE:
             return "dados", None
+        if hand.gesture == BUILD_GESTURE:
+            if self._aimed is None:
+                return None
+            return "construir", self._aimed
         if hand.gesture != config_vars.CATAN_STATS_GESTURE:
             return None
         view = self.state.catan if self.state is not None else None
@@ -84,11 +103,10 @@ class HandFeedbackLayer(Layer):
             del self._hold_started[old]
         if key is None:
             return None
-        needed = (
-            config_vars.CATAN_ROLL_HOLD_TIME
-            if found[0] == "dados"
-            else config_vars.CATAN_STATS_HOLD_TIME
-        )
+        needed = {
+            "dados": config_vars.CATAN_ROLL_HOLD_TIME,
+            "construir": config_vars.CATAN_BUILD_HOLD_TIME,
+        }.get(found[0], config_vars.CATAN_STATS_HOLD_TIME)
         started = self._hold_started.setdefault(key, current_time)
         return found[0], needed, current_time - started, found[1]
 
@@ -154,14 +172,65 @@ class HandFeedbackLayer(Layer):
             return ImagePatch(x=x, y=y, width=w, height=h, data=patch)
         return None
 
+    def _aim_patch(self, hold) -> ImagePatch | None:
+        """Marks the corner or side the player is aiming at, and says what peace would build."""
+        spot = self._aimed
+        if spot is None or self.map_system is None:
+            return None
+        confirmed = hold is not None and hold[0] == "construir"
+        color = (80, 230, 80) if confirmed and hold[2] >= hold[1] else HIGHLIGHT
+        kind, cells = spot
+        if kind == "vertex":
+            points = [self.map_system.world_to_screen(*spot_position(spot))]
+        else:
+            points = [self.map_system.world_to_screen(*p) for p in edge_endpoints(cells)]
+        pad = 60
+        x0 = max(int(min(p[0] for p in points)) - pad, 0)
+        y0 = max(int(min(p[1] for p in points)) - pad, 0)
+        x1 = min(int(max(p[0] for p in points)) + pad, self.width)
+        y1 = min(int(max(p[1] for p in points)) + pad, self.height)
+        if x1 <= x0 or y1 <= y0:
+            return None
+        patch = np.zeros((y1 - y0, x1 - x0, 4), dtype=np.uint8)
+        local = [(int(px - x0), int(py - y0)) for px, py in points]
+        if kind == "vertex":
+            cv2.circle(patch, local[0], 26, (0, 0, 0, 255), 12, cv2.LINE_AA)
+            cv2.circle(patch, local[0], 26, (*color, 255), 7, cv2.LINE_AA)
+        else:
+            cv2.line(patch, local[0], local[1], (0, 0, 0, 255), 18, cv2.LINE_AA)
+            cv2.line(patch, local[0], local[1], (*color, 255), 10, cv2.LINE_AA)
+        label = what_it_builds(spot, self.state.catan).upper()
+        mid = (sum(p[0] for p in local) // len(local), sum(p[1] for p in local) // len(local))
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        origin = (max(mid[0] - 40, 2), max(mid[1] - 36, 18))
+        cv2.putText(patch, label, origin, font, 0.8, (0, 0, 0, 255), 6, cv2.LINE_AA)
+        cv2.putText(patch, label, origin, font, 0.8, (*color, 255), 2, cv2.LINE_AA)
+        return ImagePatch(x=x0, y=y0, width=x1 - x0, height=y1 - y0, data=patch)
+
     def _generate_patches(self, current_time: float) -> list[ImagePatch]:
         if self.state is None or not self.state.inputs:
             self._hold_started.clear()
             return []
 
         patches = []
+        view = self.state.catan
+        self._aimed = None
+        if isinstance(view, CatanView) and self.map_system is not None:
+            self._aimed = self._aim.update(
+                self.state.inputs,
+                view,
+                self.map_system.screen_to_world,
+                (self.width, self.height),
+                current_time,
+            )
+        aim_drawn = False
         for index, hand in enumerate(self.state.inputs):
             hold = self._hold_for(index, hand, current_time)
+            if not aim_drawn:
+                aim_patch = self._aim_patch(hold)
+                if aim_patch is not None:
+                    patches.append(aim_patch)
+                    aim_drawn = True
             highlight = self._highlight(hold)
             if highlight is not None:
                 patches.append(highlight)

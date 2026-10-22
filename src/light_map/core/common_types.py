@@ -297,6 +297,8 @@ class TimerKey(StrEnum):
     CATAN_ROLL_COOLDOWN = "catan_roll_cooldown"
     CATAN_STATS_HOLD = "catan_stats_hold"
     CATAN_STATS_COOLDOWN = "catan_stats_cooldown"
+    CATAN_BUILD_HOLD = "catan_build_hold"
+    CATAN_BUILD_COOLDOWN = "catan_build_cooldown"
 
 
 @dataclass(frozen=True)
@@ -397,6 +399,8 @@ class Action(StrEnum):
     CATAN_ROLL_REQUEST = "CATAN_ROLL_REQUEST"
     # Sent by holding the stats gesture over a player's corner panel (simple <-> resources).
     CATAN_STATS_REQUEST = "CATAN_STATS_REQUEST"
+    # Sent by showing "peace" while a corner or side of the board is aimed at (builds there).
+    CATAN_BUILD_REQUEST = "CATAN_BUILD_REQUEST"
 
 
 @dataclass

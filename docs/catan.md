@@ -118,6 +118,12 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   **cancelar**. Con la mano, quien puede aceptar **señala su propio panel** 1 segundo; la
   proyección muestra arriba "ROJO OFRECE 2 MAD POR 1 TRI" y resalta ese panel. El comercio con el
   banco (4:1, o 3:1 y 2:1 con puerto) sigue disponible.
+- **Construir con la mano:** con el dedo **señala** la esquina (casa/ciudad) o el lado (camino) donde
+  quieres construir: se marca en dorado y dice qué se va a construir (CASA, CIUDAD o CAMINO). Sin
+  bajar la mano, haz el gesto de **paz** (índice y medio) durante 0,8 s: el anillo se llena y se
+  construye para el jugador en turno. El juego sigue aplicando las reglas (costos, distancia,
+  conexión); si no se puede, la proyección dice por qué. La marca dura 4 s después de dejar de
+  señalar. En la preparación solo se puede señalar lo que toca (casa y luego camino).
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import light_map.menu.menu_config as config_vars
+from light_map.catan.aim import BuildAim, build_action, confirming
 from light_map.catan.layout import cell_at_world, panel_at
 from light_map.catan.view import CatanView
 from light_map.core.common_types import (
@@ -248,6 +249,7 @@ class ViewingScene(BaseMapScene):
     def __init__(self, context: AppContext):
         super().__init__(context)
         self._stats_target: tuple[str, object] | None = None
+        self._build_aim = BuildAim()
 
     def on_enter(self, payload: dict | None = None) -> None:
         self.dwell_tracker.reset()
@@ -279,12 +281,16 @@ class ViewingScene(BaseMapScene):
         if Action.CATAN_STATS_REQUEST in actions:
             self._queue_catan_stats_toggle()
 
+        if Action.CATAN_BUILD_REQUEST in actions:
+            self._queue_catan_build()
+
         dt = current_time - self.last_update_time if self.last_update_time > 0 else 0.033
         self.last_update_time = current_time
 
         if not inputs:
             self.context.events.cancel(TimerKey.CATAN_ROLL_HOLD)
             self.context.events.cancel(TimerKey.CATAN_STATS_HOLD)
+            self.context.events.cancel(TimerKey.CATAN_BUILD_HOLD)
             self.summon_gesture_start_time = 0.0
             self._update_dwell_and_linger(GestureType.NONE, None, dt, current_time)
             return None
@@ -310,6 +316,7 @@ class ViewingScene(BaseMapScene):
 
         self._update_catan_roll_gesture(primary_gesture)
         self._update_catan_stats_gesture(inputs)
+        self._update_catan_build_gesture(inputs, current_time)
 
         # Multi-step menu summoning (Step 1: VICTORY for 2s, Step 2: SHAKA for 2s)
         is_step1_ready = self.context.events.has_event(TimerKey.SUMMON_MENU)
@@ -408,6 +415,48 @@ class ViewingScene(BaseMapScene):
             config_vars.CATAN_STATS_HOLD_TIME,
             lambda: Action.CATAN_STATS_REQUEST,
             key=TimerKey.CATAN_STATS_HOLD,
+        )
+
+    def _update_catan_build_gesture(self, inputs: list[HandInput], now: float) -> None:
+        """Point at a corner or side, then hold "peace" to build there for the player in turn."""
+        events = self.context.events
+        view = getattr(getattr(self.context, "state", None), "catan", None)
+        if not isinstance(view, CatanView):
+            return
+        config = self.context.app_config
+        aim = self._build_aim.update(
+            inputs,
+            view,
+            self.context.map_system.screen_to_world,
+            (config.width, config.height),
+            now,
+        )
+        if aim is None or not confirming(inputs):
+            events.cancel(TimerKey.CATAN_BUILD_HOLD)
+            return
+        if events.has_event(TimerKey.CATAN_BUILD_HOLD) or events.has_event(
+            TimerKey.CATAN_BUILD_COOLDOWN
+        ):
+            return
+        events.schedule(
+            config_vars.CATAN_BUILD_HOLD_TIME,
+            lambda: Action.CATAN_BUILD_REQUEST,
+            key=TimerKey.CATAN_BUILD_HOLD,
+        )
+
+    def _queue_catan_build(self) -> None:
+        """Asks the app to build on the aimed spot; the game decides if the move is legal."""
+        state = getattr(self.context, "state", None)
+        spot = self._build_aim.spot
+        if state is not None and spot is not None:
+            action = build_action(spot, (state.catan.game if state.catan else None))
+            if action is not None:
+                state.pending_actions.append(action)
+            self._build_aim.clear()
+        self.context.events.schedule(
+            config_vars.CATAN_BUILD_COOLDOWN,
+            lambda: None,
+            key=TimerKey.CATAN_BUILD_COOLDOWN,
         )
 
     def _queue_catan_stats_toggle(self) -> None:

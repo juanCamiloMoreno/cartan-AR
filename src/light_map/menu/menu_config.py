@@ -14,6 +14,8 @@ CATAN_ROLL_HOLD_TIME: float = 1.0  # Seconds to hold the roll gesture to throw t
 CATAN_ROLL_COOLDOWN: float = 4.0  # Seconds before another gesture roll is accepted
 CATAN_STATS_HOLD_TIME: float = 1.0  # Seconds to hold the stats gesture over a player's panel
 CATAN_STATS_COOLDOWN: float = 1.5  # Seconds before the panel can be toggled again
+CATAN_BUILD_HOLD_TIME: float = 0.8  # Seconds of "peace" over an aimed corner or side to build
+CATAN_BUILD_COOLDOWN: float = 1.5  # Seconds before the next piece can be built by hand
 ZOOM_DELAY: float = 0.5  # Seconds to hold two-hand pointing to enter zoom mode
 MODE_TRANSITION_DELAY: float = 0.5  # Seconds to wait after mode switch before processing input
 
