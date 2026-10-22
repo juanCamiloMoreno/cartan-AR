@@ -61,8 +61,8 @@ const GESTURE_LABELS: Record<string, string> = {
 const GESTURE_USES: Record<string, string> = {
   OPEN_PALM: 'selecciona (puertas, menú)',
   CLOSED_FIST: 'mueve el mapa',
-  GUN: 'mantener sobre un panel cambia su modo',
-  POINTING: 'apunta / inspecciona',
+  GUN: 'sin uso por ahora',
+  POINTING: 'mantener 1 s sobre un panel cambia su modo',
   VICTORY: 'mantener 2 s: paso 1 del menú',
   ROCK: 'mantener 1 s: tira los dados',
   SHAKA: 'paso 2 del menú',

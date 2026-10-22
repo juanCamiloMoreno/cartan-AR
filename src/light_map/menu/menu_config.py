@@ -30,7 +30,7 @@ SUMMON_STEP_2_GESTURE = GestureType.SHAKA
 ZOOM_GESTURE = GestureType.POINTING  # Both hands must be this
 PAN_GESTURE = GestureType.CLOSED_FIST
 CATAN_ROLL_GESTURE = GestureType.ROCK  # Index + pinky, held, throws the Catan dice
-CATAN_STATS_GESTURE = GestureType.GUN  # Thumb + index held over a corner panel toggles its mode
+CATAN_STATS_GESTURE = GestureType.POINTING  # Index held over a corner panel toggles its mode
 
 
 # --- Colors (BGR) ---

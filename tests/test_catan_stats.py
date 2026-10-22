@@ -309,8 +309,22 @@ def context():
     ctx.app_config.height = 864
     ctx.show_tokens = True
     ctx.inspected_token_id = None
+    ctx.map_system = MagicMock()  # pointing also runs the token inspection code
+    ctx.map_system.ghost_tokens = []
+    ctx.map_system.screen_to_world.return_value = (0.0, 0.0)
+    ctx.map_system.is_map_loaded.return_value = False
+    ctx.map_system.svg_loader.get_visibility_blockers.return_value = []
+    ctx.raw_tokens = []
+    ctx.visibility_engine = None
     ctx.state = WorldState()
     return ctx
+
+
+def make_scene(context):
+    """A viewing scene whose token/door hit-test is stubbed (pointing also runs that code)."""
+    scene = ViewingScene(context)
+    scene._find_target_at_point = lambda _pos: None
+    return scene
 
 
 def hand_at(gesture, point):
@@ -330,21 +344,21 @@ def stats_calls(context):
     ]
 
 
-def test_stats_gesture_is_not_one_already_used():
+def test_stats_gesture_does_not_clash_with_the_other_one_hand_gestures():
+    # Pointing is shared with the zoom gesture, but zoom needs both hands pointing.
     assert config_vars.CATAN_STATS_GESTURE not in {
         config_vars.CATAN_ROLL_GESTURE,
         config_vars.SUMMON_STEP_1_GESTURE,
         config_vars.SUMMON_STEP_2_GESTURE,
         config_vars.SELECT_GESTURE,
         config_vars.PAN_GESTURE,
-        config_vars.ZOOM_GESTURE,
     }
 
 
 def test_holding_the_gesture_over_a_panel_schedules_the_toggle(context):
     manager = CatanManager(board=small_board())
     manager.publish(context.state)
-    scene = ViewingScene(context)
+    scene = make_scene(context)
     scene.update(hand_at(config_vars.CATAN_STATS_GESTURE, over_panel(1)), [], 0.0)
     calls = stats_calls(context)
     assert len(calls) == 1
@@ -356,7 +370,7 @@ def test_holding_the_gesture_over_a_panel_schedules_the_toggle(context):
 def test_the_toggle_request_targets_the_panel_that_was_held(context):
     manager = CatanManager(board=small_board())
     manager.publish(context.state)
-    scene = ViewingScene(context)
+    scene = make_scene(context)
     scene.update(hand_at(config_vars.CATAN_STATS_GESTURE, over_panel(1)), [], 0.0)
     scene.update([], [Action.CATAN_STATS_REQUEST], 1.0)
     (queued,) = context.state.pending_actions
@@ -367,14 +381,14 @@ def test_the_toggle_request_targets_the_panel_that_was_held(context):
 def test_other_gestures_or_places_do_not_schedule_a_toggle(context):
     manager = CatanManager(board=small_board())
     manager.publish(context.state)
-    scene = ViewingScene(context)
+    scene = make_scene(context)
     scene.update(hand_at(config_vars.CATAN_STATS_GESTURE, (768, 432)), [], 0.0)
     scene.update(hand_at(config_vars.CATAN_ROLL_GESTURE, over_panel(1)), [], 0.0)
     assert stats_calls(context) == []
 
 
 def test_no_toggle_without_a_catan_game(context):
-    scene = ViewingScene(context)
+    scene = make_scene(context)
     scene.update(hand_at(config_vars.CATAN_STATS_GESTURE, over_panel(0)), [], 0.0)
     assert stats_calls(context) == []
 
@@ -382,7 +396,7 @@ def test_no_toggle_without_a_catan_game(context):
 def test_moving_to_another_panel_restarts_the_hold(context):
     manager = CatanManager(board=small_board())
     manager.publish(context.state)
-    scene = ViewingScene(context)
+    scene = make_scene(context)
     scene.update(hand_at(config_vars.CATAN_STATS_GESTURE, over_panel(0)), [], 0.0)
     context.events.has_event.side_effect = lambda key: key == TimerKey.CATAN_STATS_HOLD
     scene.update(hand_at(config_vars.CATAN_STATS_GESTURE, over_panel(1)), [], 0.1)
