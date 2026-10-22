@@ -1,0 +1,10 @@
+{
+    "UNDO_NAV": 1,
+    "RESET_VIEW": 2,
+    "SET_MAP_SCALE": 1,
+    "TOGGLE_STEREO_VISION": 2,
+    "TOGGLE_DEBUG_MODE": 1,
+    "CLOSE_MENU": 3,
+    "SYNC_VISION": 1,
+    "SCAN_FOR_MAPS": 1
+}

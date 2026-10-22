@@ -1,0 +1,138 @@
+{"t": 968.8, "scene": "VIEWING", "fps": 4.57, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 969.4, "scene": "VIEWING", "fps": 4.57, "hands_count": 1, "hands": [{"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}]}
+{"t": 969.9, "scene": "VIEWING", "fps": 4.26, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 970.5, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 971.0, "scene": "VIEWING", "fps": 5.81, "hands_count": 1, "hands": [{"label": "Left", "gesture": "UNKNOWN", "fingers": ["Thumb", "Index", "Middle", "Pinky"]}]}
+{"t": 971.6, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "UNKNOWN", "fingers": ["Thumb", "Index", "Middle", "Pinky"]}]}
+{"t": 972.1, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "UNKNOWN", "fingers": ["Thumb", "Index", "Middle", "Pinky"]}]}
+{"t": 972.7, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}]}
+{"t": 973.2, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}]}
+{"t": 973.8, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 974.3, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 974.8, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 975.4, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 975.9, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 976.5, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 977.0, "scene": "VIEWING", "fps": 4.26, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 977.6, "scene": "VIEWING", "fps": 5.81, "hands_count": 1, "hands": []}
+{"t": 978.1, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 978.7, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 979.2, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 979.7, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 980.3, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": []}
+{"t": 980.8, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 981.4, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 981.9, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 982.5, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 983.0, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 983.6, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 984.1, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 984.6, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 985.2, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 985.7, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 986.3, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 986.8, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 987.3, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 987.9, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 988.4, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 989.0, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 989.5, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 990.1, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 990.6, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 991.1, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 991.7, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 992.2, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 992.8, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 993.3, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 993.8, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 994.4, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 994.9, "scene": "VIEWING", "fps": 5.81, "hands_count": 0, "hands": []}
+{"t": 995.4, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Right", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 996.0, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 996.5, "scene": "VIEWING", "fps": 5.81, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 997.0, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 997.6, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 998.2, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 998.7, "scene": "VIEWING", "fps": 5.85, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 999.2, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 999.8, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 0.3, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 0.8, "scene": "VIEWING", "fps": 5.81, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 1.4, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Right", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 1.9, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 2.5, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 3.0, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 3.6, "scene": "VIEWING", "fps": 5.32, "hands_count": 2, "hands": [{"label": "Right", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}, {"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 4.1, "scene": "VIEWING", "fps": 4.93, "hands_count": 2, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}, {"label": "Right", "gesture": "UNKNOWN", "fingers": ["Thumb", "Middle", "Ring", "Pinky"]}]}
+{"t": 4.6, "scene": "VIEWING", "fps": 4.93, "hands_count": 2, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}, {"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 5.2, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 5.7, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 6.3, "scene": "VIEWING", "fps": 5.85, "hands_count": 0, "hands": []}
+{"t": 6.8, "scene": "VIEWING", "fps": 5.85, "hands_count": 0, "hands": []}
+{"t": 7.4, "scene": "VIEWING", "fps": 5.85, "hands_count": 0, "hands": []}
+{"t": 8.0, "scene": "VIEWING", "fps": 5.85, "hands_count": 0, "hands": []}
+{"t": 8.5, "scene": "VIEWING", "fps": 5.85, "hands_count": 0, "hands": []}
+{"t": 9.0, "scene": "VIEWING", "fps": 5.85, "hands_count": 0, "hands": []}
+{"t": 9.6, "scene": "VIEWING", "fps": 5.85, "hands_count": 0, "hands": []}
+{"t": 10.1, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 10.7, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 11.2, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Right", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 11.8, "scene": "VIEWING", "fps": 4.57, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 12.3, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 12.9, "scene": "VIEWING", "fps": 5.81, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 13.4, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 14.0, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Right", "gesture": "VICTORY", "fingers": ["Index", "Middle"]}]}
+{"t": 14.5, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": []}
+{"t": 15.0, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 15.6, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 16.1, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 16.7, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 17.3, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 17.8, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 18.3, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 18.9, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 19.5, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 20.0, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 20.5, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 21.1, "scene": "VIEWING", "fps": 5.32, "hands_count": 0, "hands": []}
+{"t": 21.6, "scene": "VIEWING", "fps": 4.9, "hands_count": 2, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}, {"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 22.2, "scene": "VIEWING", "fps": 4.59, "hands_count": 2, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}, {"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 22.7, "scene": "VIEWING", "fps": 5.35, "hands_count": 2, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}, {"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 23.3, "scene": "VIEWING", "fps": 5.35, "hands_count": 2, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}, {"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 23.8, "scene": "VIEWING", "fps": 5.32, "hands_count": 2, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}, {"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 24.4, "scene": "VIEWING", "fps": 4.93, "hands_count": 2, "hands": [{"label": "Right", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}, {"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 24.9, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 25.4, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 26.0, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 26.5, "scene": "VIEWING", "fps": 5.81, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 27.1, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 27.6, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}]}
+{"t": 28.2, "scene": "VIEWING", "fps": 5.81, "hands_count": 2, "hands": [{"label": "Right", "gesture": "GUN", "fingers": ["Thumb", "Index"]}, {"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}]}
+{"t": 28.7, "scene": "VIEWING", "fps": 4.93, "hands_count": 2, "hands": [{"label": "Right", "gesture": "GUN", "fingers": ["Thumb", "Index"]}, {"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}]}
+{"t": 29.2, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}]}
+{"t": 29.8, "scene": "VIEWING", "fps": 4.57, "hands_count": 1, "hands": [{"label": "Left", "gesture": "VICTORY", "fingers": ["Thumb", "Index", "Middle"]}]}
+{"t": 30.3, "scene": "VIEWING", "fps": 4.9, "hands_count": 1, "hands": [{"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}]}
+{"t": 30.9, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 31.4, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 32.0, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}]}
+{"t": 32.5, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "VICTORY", "fingers": ["Thumb", "Index", "Middle"]}]}
+{"t": 33.1, "scene": "VIEWING", "fps": 5.81, "hands_count": 2, "hands": [{"label": "Left", "gesture": "GUN", "fingers": ["Thumb", "Index"]}, {"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 33.6, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 34.2, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 34.7, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 35.3, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 35.8, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 36.4, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "VICTORY", "fingers": ["Thumb", "Index", "Middle"]}]}
+{"t": 36.9, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "ROCK", "fingers": ["Thumb", "Index", "Pinky"]}]}
+{"t": 37.5, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 38.0, "scene": "VIEWING", "fps": 4.9, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 38.5, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 39.1, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 39.6, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "VICTORY", "fingers": ["Thumb", "Index", "Middle"]}]}
+{"t": 40.2, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "UNKNOWN", "fingers": ["Thumb", "Index", "Middle", "Ring"]}]}
+{"t": 40.8, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring"]}]}
+{"t": 41.3, "scene": "VIEWING", "fps": 4.93, "hands_count": 1, "hands": [{"label": "Left", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 41.8, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "UNKNOWN", "fingers": ["Index", "Middle", "Ring", "Pinky"]}]}
+{"t": 42.4, "scene": "VIEWING", "fps": 5.32, "hands_count": 1, "hands": [{"label": "Left", "gesture": "UNKNOWN", "fingers": ["Thumb"]}]}
+{"t": 42.9, "scene": "VIEWING", "fps": 5.35, "hands_count": 1, "hands": [{"label": "Left", "gesture": "SHAKA", "fingers": ["Thumb", "Pinky"]}]}
+{"t": 43.5, "scene": "VIEWING", "fps": 5.81, "hands_count": 1, "hands": [{"label": "Left", "gesture": "OPEN_PALM", "fingers": ["Thumb", "Index", "Middle", "Ring", "Pinky"]}]}

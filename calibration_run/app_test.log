@@ -1,0 +1,486 @@
+2026-10-22 17:41:13,935 - INFO - [display_utils.py:264] - Logging initialized at level INFO
+2026-10-22 17:41:14,269 - INFO - [__main__.py:164] - Hardware Screen Resolution: 1536x864
+2026-10-22 17:41:14,272 - INFO - [__main__.py:153] - Loading non-linear distortion model...
+2026-10-22 17:41:14,276 - INFO - [__main__.py:175] - Calibration loaded. Camera Resolution: 1920x1080
+2026-10-22 17:41:14,279 - INFO - [camera.py:67] - MOCK_CAMERA=1 detected. Using dummy camera.
+2026-10-22 17:41:14,281 - INFO - [projection.py:226] - Projector3DModel: Loaded 2D Homography from C:\Users\juanc\.local\share\light_map\projector_calibration.npz
+2026-10-22 17:41:14,284 - INFO - [interactive_app.py:754] - InteractiveApp: Normalizing calibration from 1920x1080 to 4608x2592
+2026-10-22 17:41:14,295 - INFO - [interactive_app.py:228] - InteractiveApp: Initialized StereoTriangulator from stereo_calibration.json
+2026-10-22 17:41:14,305 - INFO - [aruco_detector.py:51] - ArucoDetector: Loaded camera calibration from C:\Users\juanc\.local\share\light_map\camera_calibration.npz.
+2026-10-22 17:41:14,305 - INFO - [aruco_detector.py:68] - ArucoDetector: Loaded camera extrinsics from C:\Users\juanc\.local\share\light_map\camera_extrinsics.npz.
+2026-10-22 17:41:14,307 - WARNING - [calibration_scenes.py:865] - FlashCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 17:41:14,308 - WARNING - [calibration_scenes.py:895] - PpiCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 17:41:14,308 - WARNING - [calibration_scenes.py:875] - ProjectorCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 17:41:14,308 - WARNING - [calibration_scenes.py:885] - ExtrinsicsCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 17:41:14,308 - WARNING - [calibration_scenes.py:910] - Projector3DCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 17:41:14,309 - INFO - [__main__.py:265] - Loading map: maps/catan.svg
+2026-10-22 17:41:14,318 - INFO - [interactive_app.py:640] - Refreshed base scale for catan.svg: 0.6566 (PPI=41.1)
+2026-10-22 17:41:14,320 - INFO - [camera.py:67] - MOCK_CAMERA=1 detected. Using dummy camera.
+2026-10-22 17:41:14,386 - CRITICAL - [__main__.py:298] - 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+CRITICAL WARNING: Camera Resolution Mismatch!
+  Runtime:     4608x2592
+  Calibration: 1920x1080
+  The projector matrix will map points incorrectly.
+  PLEASE RE-CALIBRATE: light-map projector-calibrate
+!
+
+2026-10-22 17:41:14,388 - INFO - [__main__.py:388] - --no-stereo given. Running in single-camera mono mode.
+2026-10-22 17:41:14,392 - INFO - [process_manager.py:78] - Starting VisionProcessManager...
+2026-10-22 17:41:14,392 - INFO - [camera_operator.py:61] - CameraOperator initialized with shared memory: wnsm_8601103a, size=179159144
+2026-10-22 17:41:14,430 - INFO - [process_manager.py:175] - Vision infrastructure ready with 3 workers.
+2026-10-22 17:41:14,431 - INFO - [frame_producer.py:60] - FrameProducer attached to shared memory: wnsm_8601103a
+2026-10-22 17:41:14,431 - INFO - [main_loop.py:182] - Main loop started.
+INFO:     Started server process [14260]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1792708878.277044   30608 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1792708878.321748   30608 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+INFO:     127.0.0.1:58248 - "WebSocket /ws/state" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:58261 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58264 - "POST /input/action?action=CATAN_NEW_GAME&payload=%7B%22players%22%3A+3%2C+%22phased%22%3A+false%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:39,970 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_NEW_GAME
+INFO:     127.0.0.1:58265 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58266 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58267 - "POST /input/action?action=CATAN_BUILD&payload=%7B%22player%22%3A+%22rojo%22%2C+%22vertex%22%3A+%5B%5B-2%2C+0%5D%2C+%5B-2%2C+1%5D%2C+%5B-1%2C+0%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:40,838 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_BUILD
+INFO:     127.0.0.1:58268 - "POST /input/action?action=CATAN_ROAD&payload=%7B%22player%22%3A+%22rojo%22%2C+%22edge%22%3A+%5B%5B-2%2C+0%5D%2C+%5B-2%2C+1%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:41,544 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_ROAD
+INFO:     127.0.0.1:58271 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58272 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58273 - "POST /input/action?action=CATAN_BUILD&payload=%7B%22player%22%3A+%22azul%22%2C+%22vertex%22%3A+%5B%5B-2%2C+1%5D%2C+%5B-2%2C+2%5D%2C+%5B-1%2C+1%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:42,197 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_BUILD
+INFO:     127.0.0.1:58274 - "POST /input/action?action=CATAN_ROAD&payload=%7B%22player%22%3A+%22azul%22%2C+%22edge%22%3A+%5B%5B-2%2C+1%5D%2C+%5B-2%2C+2%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:43,068 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_ROAD
+INFO:     127.0.0.1:58275 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58276 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58277 - "POST /input/action?action=CATAN_BUILD&payload=%7B%22player%22%3A+%22blanco%22%2C+%22vertex%22%3A+%5B%5B-1%2C+-1%5D%2C+%5B-1%2C+0%5D%2C+%5B0%2C+-1%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:43,938 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_BUILD
+INFO:     127.0.0.1:58278 - "POST /input/action?action=CATAN_ROAD&payload=%7B%22player%22%3A+%22blanco%22%2C+%22edge%22%3A+%5B%5B-1%2C+-1%5D%2C+%5B-1%2C+0%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:44,511 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_ROAD
+INFO:     127.0.0.1:58281 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58282 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58283 - "POST /input/action?action=CATAN_BUILD&payload=%7B%22player%22%3A+%22blanco%22%2C+%22vertex%22%3A+%5B%5B-1%2C+0%5D%2C+%5B-1%2C+1%5D%2C+%5B0%2C+0%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:45,321 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_BUILD
+INFO:     127.0.0.1:58284 - "POST /input/action?action=CATAN_ROAD&payload=%7B%22player%22%3A+%22blanco%22%2C+%22edge%22%3A+%5B%5B-1%2C+0%5D%2C+%5B-1%2C+1%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:46,037 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_ROAD
+INFO:     127.0.0.1:58285 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58286 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58287 - "POST /input/action?action=CATAN_BUILD&payload=%7B%22player%22%3A+%22azul%22%2C+%22vertex%22%3A+%5B%5B-1%2C+1%5D%2C+%5B-1%2C+2%5D%2C+%5B0%2C+1%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:47,078 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_BUILD
+INFO:     127.0.0.1:58288 - "POST /input/action?action=CATAN_ROAD&payload=%7B%22player%22%3A+%22azul%22%2C+%22edge%22%3A+%5B%5B-1%2C+1%5D%2C+%5B-1%2C+2%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:47,653 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_ROAD
+INFO:     127.0.0.1:58291 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58292 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58293 - "POST /input/action?action=CATAN_BUILD&payload=%7B%22player%22%3A+%22rojo%22%2C+%22vertex%22%3A+%5B%5B0%2C+-2%5D%2C+%5B0%2C+-1%5D%2C+%5B1%2C+-2%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:48,502 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_BUILD
+INFO:     127.0.0.1:58294 - "POST /input/action?action=CATAN_ROAD&payload=%7B%22player%22%3A+%22rojo%22%2C+%22edge%22%3A+%5B%5B0%2C+-2%5D%2C+%5B0%2C+-1%5D%5D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:49,142 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_ROAD
+INFO:     127.0.0.1:58295 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58296 - "POST /input/action?action=CATAN_ROLL&payload=2%2C2 HTTP/1.1" 200 OK
+2026-10-22 17:41:49,902 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_ROLL
+INFO:     127.0.0.1:58298 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58299 - "POST /input/action?action=CATAN_CARDS&payload=%7B%22player%22%3A+%22rojo%22%2C+%22resource%22%3A+%22wood%22%2C+%22amount%22%3A+-2%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:50,696 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_CARDS
+INFO:     127.0.0.1:58302 - "POST /input/action?action=CATAN_CARDS&payload=%7B%22player%22%3A+%22azul%22%2C+%22resource%22%3A+%22wood%22%2C+%22amount%22%3A+-1%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:51,411 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_CARDS
+INFO:     127.0.0.1:58303 - "POST /input/action?action=CATAN_CARDS&payload=%7B%22player%22%3A+%22azul%22%2C+%22resource%22%3A+%22sheep%22%2C+%22amount%22%3A+-1%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:52,160 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_CARDS
+INFO:     127.0.0.1:58304 - "POST /input/action?action=CATAN_CARDS&payload=%7B%22player%22%3A+%22azul%22%2C+%22resource%22%3A+%22wheat%22%2C+%22amount%22%3A+-1%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:52,950 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_CARDS
+INFO:     127.0.0.1:58305 - "POST /input/action?action=CATAN_CARDS&payload=%7B%22player%22%3A+%22blanco%22%2C+%22resource%22%3A+%22wood%22%2C+%22amount%22%3A+-1%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:53,662 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_CARDS
+INFO:     127.0.0.1:58308 - "POST /input/action?action=CATAN_CARDS&payload=%7B%22player%22%3A+%22blanco%22%2C+%22resource%22%3A+%22wheat%22%2C+%22amount%22%3A+-1%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:54,378 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_CARDS
+INFO:     127.0.0.1:58309 - "POST /input/action?action=CATAN_CARDS&payload=%7B%22player%22%3A+%22blanco%22%2C+%22resource%22%3A+%22ore%22%2C+%22amount%22%3A+-1%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:55,035 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_CARDS
+INFO:     127.0.0.1:58310 - "POST /input/action?action=CATAN_CARDS&payload=%7B%22player%22%3A+%22rojo%22%2C+%22resource%22%3A+%22wood%22%2C+%22amount%22%3A+2%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:55,916 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_CARDS
+INFO:     127.0.0.1:58311 - "POST /input/action?action=CATAN_CARDS&payload=%7B%22player%22%3A+%22azul%22%2C+%22resource%22%3A+%22ore%22%2C+%22amount%22%3A+1%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:56,664 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_CARDS
+INFO:     127.0.0.1:58313 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58314 - "POST /input/action?action=CATAN_TRADE_OFFER&payload=%7B%22player%22%3A+%22rojo%22%2C+%22give%22%3A+%7B%22wood%22%3A+2%7D%2C+%22get%22%3A+%7B%22ore%22%3A+1%7D%7D HTTP/1.1" 200 OK
+2026-10-22 17:41:57,288 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_TRADE_OFFER
+INFO:     127.0.0.1:58316 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58317 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58318 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58319 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58320 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58321 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58322 - "POST /input/hands HTTP/1.1" 200 OK
+2026-10-22 17:41:59,468 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_TRADE_ACCEPT
+INFO:     127.0.0.1:58323 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58325 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58326 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58328 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58329 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58330 - "POST /input/hands HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58331 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58332 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58333 - "POST /input/action?action=CATAN_TRADE_OFFER&payload=%7B%22player%22%3A+%22rojo%22%2C+%22give%22%3A+%7B%22ore%22%3A+1%7D%2C+%22get%22%3A+%7B%22wood%22%3A+2%7D%2C+%22to%22%3A+%22azul%22%7D HTTP/1.1" 200 OK
+2026-10-22 17:42:02,358 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_TRADE_OFFER
+INFO:     127.0.0.1:58335 - "POST /input/action?action=CATAN_TRADE_DECLINE&payload=%7B%22player%22%3A+%22azul%22%7D HTTP/1.1" 200 OK
+2026-10-22 17:42:03,228 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_TRADE_DECLINE
+INFO:     127.0.0.1:58337 - "GET /state/world HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64990 - "POST /input/action?action=CATAN_TRADE_ACCEPT&payload=%7B%22player%22%3A+%22azul%22%7D HTTP/1.1" 200 OK
+2026-10-22 17:42:03,768 - INFO - [action_dispatcher.py:35] - ActionDispatcher: Dispatching action: CATAN_TRADE_ACCEPT
+2026-10-22 17:42:03,768 - WARNING - [action_dispatcher.py:507] - accept_trade rejected: There is no open trade offer
+INFO:     127.0.0.1:64991 - "GET /state/world HTTP/1.1" 200 OK

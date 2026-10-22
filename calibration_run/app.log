@@ -1,0 +1,37 @@
+2026-10-22 11:35:05,845 - INFO - [display_utils.py:259] - Logging initialized at level INFO
+2026-10-22 11:35:05,847 - INFO - [__main__.py:164] - Hardware Screen Resolution: 1920x1080
+2026-10-22 11:35:05,850 - INFO - [__main__.py:153] - Loading non-linear distortion model...
+2026-10-22 11:35:05,851 - INFO - [__main__.py:175] - Calibration loaded. Camera Resolution: 1920x1080
+2026-10-22 11:35:05,854 - INFO - [camera.py:77] - Opening standard camera index 1...
+2026-10-22 11:35:23,788 - INFO - [camera.py:85] - Actual camera resolution: 1920x1080
+2026-10-22 11:35:23,799 - INFO - [projection.py:226] - Projector3DModel: Loaded 2D Homography from C:\Users\juanc\.local\share\light_map\projector_calibration.npz
+2026-10-22 11:35:23,806 - INFO - [interactive_app.py:228] - InteractiveApp: Initialized StereoTriangulator from stereo_calibration.json
+2026-10-22 11:35:23,816 - INFO - [aruco_detector.py:51] - ArucoDetector: Loaded camera calibration from C:\Users\juanc\.local\share\light_map\camera_calibration.npz.
+2026-10-22 11:35:23,817 - INFO - [aruco_detector.py:68] - ArucoDetector: Loaded camera extrinsics from C:\Users\juanc\.local\share\light_map\camera_extrinsics.npz.
+2026-10-22 11:35:23,818 - WARNING - [calibration_scenes.py:865] - FlashCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 11:35:23,818 - WARNING - [calibration_scenes.py:895] - PpiCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 11:35:23,818 - WARNING - [calibration_scenes.py:875] - ProjectorCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 11:35:23,818 - WARNING - [calibration_scenes.py:885] - ExtrinsicsCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 11:35:23,818 - WARNING - [calibration_scenes.py:910] - Projector3DCalibrationScene is deprecated; delegating to StereoCalibrationScene.
+2026-10-22 11:35:23,819 - INFO - [__main__.py:265] - Loading map: maps/catan.svg
+2026-10-22 11:35:23,827 - INFO - [interactive_app.py:640] - Refreshed base scale for catan.svg: 0.6566 (PPI=41.1)
+2026-10-22 11:35:23,830 - INFO - [camera.py:77] - Opening standard camera index 1...
+2026-10-22 11:35:41,287 - INFO - [camera.py:85] - Actual camera resolution: 1920x1080
+2026-10-22 11:35:41,445 - INFO - [__main__.py:388] - --no-stereo given. Running in single-camera mono mode.
+2026-10-22 11:35:41,451 - INFO - [process_manager.py:78] - Starting VisionProcessManager...
+2026-10-22 11:35:41,451 - INFO - [camera_operator.py:61] - CameraOperator initialized with shared memory: wnsm_ad6d8744, size=31104104
+2026-10-22 11:35:41,497 - INFO - [process_manager.py:175] - Vision infrastructure ready with 3 workers.
+2026-10-22 11:35:41,497 - INFO - [frame_producer.py:60] - FrameProducer attached to shared memory: wnsm_ad6d8744
+2026-10-22 11:35:41,497 - INFO - [main_loop.py:182] - Main loop started.
+INFO:     Started server process [32552]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+W0000 00:00:1792686944.465333   43128 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+W0000 00:00:1792686944.499661   43128 inference_feedback_manager.cc:114] Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+INFO:     127.0.0.1:50260 - "WebSocket /ws/state" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:50266 - "GET /state/world HTTP/1.1" 200 OK
+W0000 00:00:1792687476.492216   43128 landmark_projection_calculator.cc:186] Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.

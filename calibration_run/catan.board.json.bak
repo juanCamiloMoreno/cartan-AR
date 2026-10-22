@@ -1,0 +1,306 @@
+{
+  "tiles": [
+    {
+      "q": 0,
+      "r": -2,
+      "resource": "wood",
+      "number": 5
+    },
+    {
+      "q": 1,
+      "r": -2,
+      "resource": "wood",
+      "number": 10
+    },
+    {
+      "q": 2,
+      "r": -2,
+      "resource": "brick",
+      "number": 3
+    },
+    {
+      "q": -1,
+      "r": -1,
+      "resource": "sheep",
+      "number": 3
+    },
+    {
+      "q": 0,
+      "r": -1,
+      "resource": "desert",
+      "number": null
+    },
+    {
+      "q": 1,
+      "r": -1,
+      "resource": "wheat",
+      "number": 9
+    },
+    {
+      "q": 2,
+      "r": -1,
+      "resource": "wood",
+      "number": 2
+    },
+    {
+      "q": -2,
+      "r": 0,
+      "resource": "sheep",
+      "number": 8
+    },
+    {
+      "q": -1,
+      "r": 0,
+      "resource": "ore",
+      "number": 5
+    },
+    {
+      "q": 0,
+      "r": 0,
+      "resource": "wheat",
+      "number": 6
+    },
+    {
+      "q": 1,
+      "r": 0,
+      "resource": "wheat",
+      "number": 9
+    },
+    {
+      "q": 2,
+      "r": 0,
+      "resource": "brick",
+      "number": 4
+    },
+    {
+      "q": -2,
+      "r": 1,
+      "resource": "sheep",
+      "number": 12
+    },
+    {
+      "q": -1,
+      "r": 1,
+      "resource": "wood",
+      "number": 11
+    },
+    {
+      "q": 0,
+      "r": 1,
+      "resource": "wheat",
+      "number": 11
+    },
+    {
+      "q": 1,
+      "r": 1,
+      "resource": "ore",
+      "number": 6
+    },
+    {
+      "q": -2,
+      "r": 2,
+      "resource": "brick",
+      "number": 10
+    },
+    {
+      "q": -1,
+      "r": 2,
+      "resource": "sheep",
+      "number": 8
+    },
+    {
+      "q": 0,
+      "r": 2,
+      "resource": "ore",
+      "number": 4
+    }
+  ],
+  "robber": [
+    2,
+    -1
+  ],
+  "buildings": [
+    {
+      "vertex": [
+        [
+          -1,
+          1
+        ],
+        [
+          -1,
+          2
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "player": "azul",
+      "kind": "settlement"
+    },
+    {
+      "vertex": [
+        [
+          0,
+          -1
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          -1
+        ]
+      ],
+      "player": "azul",
+      "kind": "settlement"
+    },
+    {
+      "vertex": [
+        [
+          1,
+          -1
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          -1
+        ]
+      ],
+      "player": "blanco",
+      "kind": "settlement"
+    },
+    {
+      "vertex": [
+        [
+          -2,
+          0
+        ],
+        [
+          -1,
+          -1
+        ],
+        [
+          -1,
+          0
+        ]
+      ],
+      "player": "rojo",
+      "kind": "settlement"
+    },
+    {
+      "vertex": [
+        [
+          -1,
+          0
+        ],
+        [
+          -1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "player": "rojo",
+      "kind": "city"
+    },
+    {
+      "vertex": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          0
+        ]
+      ],
+      "player": "naranja",
+      "kind": "city"
+    }
+  ],
+  "roads": [
+    {
+      "edge": [
+        [
+          -1,
+          1
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "player": "rojo"
+    },
+    {
+      "edge": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "player": "rojo"
+    },
+    {
+      "edge": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "player": "naranja"
+    },
+    {
+      "edge": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "player": "naranja"
+    }
+  ],
+  "players": [
+    "rojo",
+    "azul",
+    "blanco",
+    "naranja"
+  ],
+  "hands": {
+    "azul": {
+      "wheat": 4
+    },
+    "rojo": {
+      "wheat": 8,
+      "ore": 3
+    },
+    "naranja": {
+      "ore": 8,
+      "brick": 4
+    }
+  },
+  "stats_modes": {}
+}
