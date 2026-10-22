@@ -177,6 +177,46 @@ export const CatanBoard: React.FC<CatanBoardProps> = ({ catan }) => {
           />
         )}
 
+        {(board.ports ?? []).map((port, index) => (
+          <g key={`port-${index}`} data-testid={`port-${index}`} data-kind={port.kind}>
+            <line
+              x1={port.x1}
+              y1={port.y1}
+              x2={port.x}
+              y2={port.y}
+              stroke="#eceff1"
+              strokeWidth={3}
+            />
+            <line
+              x1={port.x2}
+              y1={port.y2}
+              x2={port.x}
+              y2={port.y}
+              stroke="#eceff1"
+              strokeWidth={3}
+            />
+            <circle
+              cx={port.x}
+              cy={port.y}
+              r={18}
+              fill={port.kind === 'any' ? '#eceff1' : RESOURCE_COLORS[port.kind]}
+              stroke="#212121"
+              strokeWidth={2}
+            />
+            <text
+              x={port.x}
+              y={port.kind === 'any' ? port.y + 5 : port.y - 1}
+              textAnchor="middle"
+              fontSize={13}
+              fontWeight="bold"
+              fill="#212121"
+              pointerEvents="none"
+            >
+              {port.kind === 'any' ? '3:1' : '2:1'}
+            </text>
+          </g>
+        ))}
+
         {(board.edges ?? []).map((edge, index) => {
           const road = roadAt.get(JSON.stringify(edge.id));
           if (!road && mode !== 'road') return null;

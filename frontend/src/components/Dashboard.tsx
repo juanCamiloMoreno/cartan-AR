@@ -8,6 +8,7 @@ import { TokenLibrary } from './TokenLibrary';
 import { SettingsModal } from './SettingsModal';
 import { CatanPanel } from './CatanPanel';
 import { CatanGame } from './CatanGame';
+import { CatanGenerator } from './CatanGenerator';
 import { CatanStats } from './CatanStats';
 import { HandDebugPanel } from './HandDebugPanel';
 import { CatanBoard } from './CatanBoard';
@@ -136,6 +137,9 @@ export const Dashboard = () => {
           </div>
           <div className="mb-6">
             <CatanGame catan={world?.catan} />
+          </div>
+          <div className="mb-6">
+            <CatanGenerator catan={world?.catan} />
           </div>
           <div className="mb-6">
             <CatanPanel catan={world?.catan} />

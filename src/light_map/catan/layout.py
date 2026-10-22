@@ -82,12 +82,20 @@ DICE_CLEARANCE = 200  # keeps the top-right panel below the dice
 CORNERS = ("bottom_left", "top_right", "top_left", "bottom_right")
 
 
+BANNER_RESERVE = 110  # screen pixels kept free at the top for the game banner
+
+
 def fit_board_view(width: int, height: int) -> tuple[float, float, float]:
-    """(x, y, zoom) that centers the board and makes it as big as fits between the panels."""
+    """(x, y, zoom) that centers the board and makes it as big as fits between the panels.
+
+    The board sits below the banner strip at the top and between the side panels.
+    """
     free_width = width - 2 * (PANEL_W + 2 * PANEL_MARGIN)
-    free_height = height - 2 * PANEL_MARGIN
+    free_height = height - BANNER_RESERVE - PANEL_MARGIN
     zoom = max(0.1, min(free_width / BOARD_WIDTH, free_height / BOARD_HEIGHT))
-    return (width - zoom * BOARD_WIDTH) / 2, (height - zoom * BOARD_HEIGHT) / 2, zoom
+    x = (width - zoom * BOARD_WIDTH) / 2
+    y = BANNER_RESERVE + (free_height - zoom * BOARD_HEIGHT) / 2
+    return x, y, zoom
 
 
 def panel_rect(index: int, width: int, height: int) -> tuple[int, int, int, int]:

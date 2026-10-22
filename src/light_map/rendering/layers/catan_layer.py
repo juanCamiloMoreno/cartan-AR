@@ -155,7 +155,7 @@ class CatanLayer(Layer):
         ox, oy = self.map_system.world_to_screen(0, 0)
         ux, uy = self.map_system.world_to_screen(100, 0)
         scale = max(0.3, math.hypot(ux - ox, uy - oy) / 100)
-        radius = int(min(max(26 * scale, 16), 46))
+        radius = int(min(max(33 * scale, 18), 56))
         font = cv2.FONT_HERSHEY_SIMPLEX
         for port in ports:
             anchor = tuple(int(v) for v in self.map_system.world_to_screen(port["x"], port["y"]))
@@ -175,7 +175,8 @@ class CatanLayer(Layer):
             text_color = (
                 (20, 20, 20, 255) if kind in ("any", "wheat", "sheep") else (255, 255, 255, 255)
             )
-            origin = (anchor[0] - tw // 2, anchor[1] + (th // 2 if kind == "any" else 0))
+            offset = th // 2 if kind == "any" else -int(radius * 0.14)
+            origin = (anchor[0] - tw // 2, anchor[1] + offset)
             cv2.putText(buffer, label, origin, font, size, text_color, 2, cv2.LINE_AA)
             if kind != "any":
                 code = RESOURCE_SHORT[kind]
@@ -183,7 +184,7 @@ class CatanLayer(Layer):
                 cv2.putText(
                     buffer,
                     code,
-                    (anchor[0] - cw // 2, anchor[1] + ch + 6),
+                    (anchor[0] - cw // 2, anchor[1] + int(radius * 0.62) + ch // 2),
                     font,
                     size * 0.8,
                     text_color,

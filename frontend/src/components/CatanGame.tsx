@@ -51,6 +51,7 @@ export const CatanGame: React.FC<CatanGameProps> = ({ catan }) => {
 
   const inGame = game.phase !== 'free';
   const current = game.current_player;
+  const rate = (current && catan.stats?.[current]?.rates?.[give]) || 4;
 
   const setDiscard = (player: string, resource: string, value: number) =>
     setDiscards((prev) => ({
@@ -114,7 +115,7 @@ export const CatanGame: React.FC<CatanGameProps> = ({ catan }) => {
             Terminar turno
           </button>
           <div className="flex flex-wrap items-center gap-1 text-xs text-gray-600">
-            <span>Banco 4:1</span>
+            <span data-testid="bank-rate">Banco {rate}:1</span>
             <select
               aria-label="Dar"
               value={give}

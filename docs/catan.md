@@ -53,6 +53,20 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   5. **Victoria:** el primero en llegar a 10 puntos (casa 1, ciudad 2) gana. Las piezas están
      limitadas (15 caminos, 5 casas, 4 ciudades).
   La proyección muestra arriba qué espera la mesa y resalta el panel del jugador en turno.
+- **Generador de tableros:** el panel "Nuevo tablero" del dashboard arma un tablero nuevo con una
+  lista de reglas que se activan o desactivan (las cuatro primeras dicen si se *permite* la situación):
+  recursos iguales pegados, 6 y 8 pegados (la regla oficial lo prohíbe, por eso viene apagado),
+  2 y 12 pegados, números iguales pegados, y barajar los puertos. Además hay tres niveles de
+  equilibrio: **al azar**, **más o menos justo** y **muy justo**. Se miden los puntos de probabilidad
+  (6 y 8 valen 5, 5 y 9 valen 4, y así hasta 2 y 12 que valen 1) de cada recurso y de cada esquina:
+  el nivel justo exige que ningún recurso quede muy por encima de otro y que haya pocas esquinas de
+  12 puntos o más. Si las reglas son tan estrictas que no se pueden cumplir, se muestra el mejor
+  tablero encontrado y un aviso. También se puede generar desde la línea de comandos:
+  `python scripts/generate_catan_board.py --balance fair --no-same-resource`.
+- **Puertos:** hay 9 en la costa (4 de 3:1 y 5 de 2:1, uno por recurso) con el reparto del tablero
+  oficial (separados por 3 y 4 aristas de costa). Se proyectan y se ven en el dashboard. Quien tenga
+  una casa o ciudad en un puerto comercia con el banco a 3:1, o a 2:1 si el puerto es de ese recurso;
+  sin puerto sigue siendo 4:1.
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.
@@ -94,7 +108,7 @@ Se respetó la regla del proyecto: la lectura se hace desde `WorldState` y solo 
 - **No probado:** con un proyector real sobre una mesa, ni con una mano real para el gesto.
 - La calibración usada en las pruebas es falsa; para uso real hay que calibrar cámara y proyector.
 - Faltan reglas de Catan: camino más largo, ejército más grande, cartas de desarrollo, comercio
-  entre jugadores y puertos (hoy solo existe el banco 4:1).
+  entre jugadores y armar el tablero por fases en la mesa (hoy aparece de una vez).
 - Los paneles de las esquinas y el gesto de señalar se probaron con imágenes generadas y manos
   simuladas, no con el proyector real.
 - Hay pruebas antiguas del repositorio que ya fallaban antes de estos cambios (varias por la

@@ -130,6 +130,29 @@ export interface CatanBoardGeometry {
   }[];
   vertices: { id: [number, number][]; x: number; y: number }[];
   edges?: { id: [number, number][]; x1: number; y1: number; x2: number; y2: number }[];
+  ports?: {
+    id: [number, number][];
+    kind: string; // "any" (3:1) or a resource (2:1)
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    x: number;
+    y: number;
+  }[];
+}
+
+export interface CatanGenerationReport {
+  attempts: number;
+  satisfied: boolean;
+  metrics: {
+    resource_pips: Record<string, number>;
+    resource_avg: Record<string, number>;
+    avg_spread: number;
+    total_spread: number;
+    best_corner: number;
+    strong_corners: number;
+  } | null;
 }
 
 export interface HandDebug {
@@ -160,6 +183,7 @@ export interface CatanPlayerStats {
   cards: number;
   points: number;
   hand: Record<string, number>;
+  rates?: Record<string, number>;
   mode: CatanStatsMode;
 }
 
@@ -174,6 +198,7 @@ export interface CatanState {
   roads?: { edge: [number, number][]; player: string }[];
   stats?: Record<string, CatanPlayerStats>;
   game?: CatanGameState | null;
+  generator?: CatanGenerationReport | null;
   board: CatanBoardGeometry | null;
 }
 

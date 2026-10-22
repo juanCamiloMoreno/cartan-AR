@@ -408,17 +408,23 @@ def test_panel_constants_are_consistent():
 
 
 def test_fit_board_view_centers_the_board_between_the_panels():
-    from light_map.catan.layout import BOARD_HEIGHT, BOARD_WIDTH, PANEL_W, fit_board_view
+    from light_map.catan.layout import (
+        BANNER_RESERVE,
+        BOARD_HEIGHT,
+        BOARD_WIDTH,
+        PANEL_W,
+        fit_board_view,
+    )
 
     for width, height in ((1920, 1080), (1371, 771)):
         x, y, zoom = fit_board_view(width, height)
         assert zoom > 0
-        # centered
+        # centered sideways and between the banner strip and the bottom margin
         assert x == pytest.approx(width - x - zoom * BOARD_WIDTH)
-        assert y == pytest.approx(height - y - zoom * BOARD_HEIGHT)
+        assert y >= BANNER_RESERVE
+        assert y + zoom * BOARD_HEIGHT <= height
         # inside the screen and clear of the side panels
         assert x >= PANEL_W and x + zoom * BOARD_WIDTH <= width - PANEL_W
-        assert y >= 0 and y + zoom * BOARD_HEIGHT <= height
 
 
 # Game banner and turn highlight
