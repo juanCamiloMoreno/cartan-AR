@@ -10,6 +10,7 @@ from light_map.rendering.layers.cursor_layer import CursorLayer
 from light_map.rendering.layers.door_layer import DoorLayer
 from light_map.rendering.layers.flash_layer import FlashLayer
 from light_map.rendering.layers.fow_layer import FogOfWarLayer
+from light_map.rendering.layers.hand_feedback_layer import HandFeedbackLayer
 from light_map.rendering.layers.hand_mask_layer import HandMaskLayer
 from light_map.rendering.layers.instruction_layer import InstructionLayer
 from light_map.rendering.layers.map_grid_layer import MapGridLayer
@@ -74,6 +75,7 @@ class LayerStackManager:
         self.selection_progress_layer = SelectionProgressLayer(state, context)
         self.ping_layer = PingLayer(state, context)
         self.cursor_layer = CursorLayer(state, context)
+        self.hand_feedback_layer = HandFeedbackLayer(state, config.width, config.height)
         self.tactical_overlay_layer = TacticalOverlayLayer(
             state, context.map_system, context.visibility_engine
         )
@@ -119,6 +121,7 @@ class LayerStackManager:
             self.debug_layer,
             self.selection_progress_layer,
             self.cursor_layer,
+            self.hand_feedback_layer,
             self.aruco_mask_layer,  # TOPMOST
         ]
 
@@ -168,6 +171,7 @@ class LayerStackManager:
             self.debug_layer,
             self.selection_progress_layer,
             self.cursor_layer,
+            self.hand_feedback_layer,
             self.ping_layer,
             self.tactical_overlay_layer,
             self.flash_layer,

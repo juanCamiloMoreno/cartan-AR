@@ -37,8 +37,8 @@ def test_interactive_app_layered_init(mock_config, monkeypatch):
     assert hasattr(app, "layer_stack")
     stack = app.layer_stack
     assert (
-        len(stack) == 11
-    )  # BackgroundComposite, Catan, Hand, Token, Ping, Menu, Notif, Debug, SelectionProgress, Cursor, ArucoMask
+        len(stack) == 12
+    )  # BackgroundComposite, Catan, Hand, Token, Ping, Menu, Notif, Debug, SelectionProgress, Cursor, HandFeedback, ArucoMask
 
     # Verify background_composite is the first layer
     from light_map.core.common_types import CompositeLayer
