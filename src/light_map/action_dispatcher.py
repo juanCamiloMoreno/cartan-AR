@@ -97,6 +97,10 @@ class ActionDispatcher:
         self.register("CATAN_BANK", handle_catan_bank)
         self.register("CATAN_NEW_BOARD", handle_catan_new_board)
         self.register("CATAN_DEV_BUY", handle_catan_dev_buy)
+        self.register("CATAN_TRADE_OFFER", handle_catan_trade_offer)
+        self.register("CATAN_TRADE_ACCEPT", handle_catan_trade_accept)
+        self.register("CATAN_TRADE_DECLINE", handle_catan_trade_decline)
+        self.register("CATAN_TRADE_CANCEL", handle_catan_trade_cancel)
         self.register("CATAN_DEV_PLAY", handle_catan_dev_play)
         self.register("CATAN_DEV_SKIP", handle_catan_dev_skip)
         self.register("CATAN_ORDER_ROLL", handle_catan_order_roll)
@@ -690,6 +694,44 @@ def handle_catan_reveal_all(
 ) -> Optional["SceneTransition"]:
     """Reveals everything that is still hidden."""
     return _run_catan(app, payload, state, "reveal_all")
+
+
+def handle_catan_trade_offer(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """The player in turn offers cards to the others. Payload: {"player": "rojo",
+    "give": {"wood": 2}, "get": {"ore": 1}, "to": "azul"} ("to" is optional: open to all)."""
+    manager = _catan_manager(app, state)
+    if manager is None:
+        return None
+    try:
+        data = _catan_payload(payload)
+        manager.propose_trade(state, data["player"], data["give"], data["get"], data.get("to"))
+    except (ValueError, KeyError, TypeError, AttributeError) as exc:
+        logging.warning("propose_trade rejected: %s", exc)
+        _catan_refused(app, manager, state, exc)
+    return None
+
+
+def handle_catan_trade_accept(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """A player accepts the open offer. Payload: {"player": "azul"}."""
+    return _run_catan(app, payload, state, "accept_trade", "player")
+
+
+def handle_catan_trade_decline(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """A player turns the open offer down. Payload: {"player": "azul"}."""
+    return _run_catan(app, payload, state, "decline_trade", "player")
+
+
+def handle_catan_trade_cancel(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """The player who offered takes the offer back. Payload: {"player": "rojo"}."""
+    return _run_catan(app, payload, state, "cancel_trade", "player")
 
 
 def handle_catan_dev_buy(

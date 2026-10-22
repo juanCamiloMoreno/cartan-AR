@@ -68,6 +68,11 @@ class HandFeedbackLayer(Layer):
             return None
         if phase == "steal":
             return ("robar", player) if player in (view.game or {}).get("victims", []) else None
+        trade = (view.game or {}).get("trade")
+        if phase == "main" and trade:
+            if player != trade["from"] and trade.get("to") in (None, player):
+                return "aceptar", player
+            return None
         return "panel", player
 
     def _hold_for(self, index: int, hand, current_time: float):
@@ -140,7 +145,7 @@ class HandFeedbackLayer(Layer):
             cv2.fillPoly(patch, [local], (*color, 90), lineType=cv2.LINE_AA)
             cv2.polylines(patch, [local], True, (*color, 255), 10, cv2.LINE_AA)
             return ImagePatch(x=x0, y=y0, width=x1 - x0, height=y1 - y0, data=patch)
-        if what in ("robar", "panel"):
+        if what in ("robar", "panel", "aceptar"):
             view = self.state.catan
             index = list(view.players).index(target)
             x, y, w, h = panel_rect(index, self.width, self.height)

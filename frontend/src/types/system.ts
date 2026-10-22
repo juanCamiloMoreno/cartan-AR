@@ -190,6 +190,19 @@ export interface CatanGameState {
   order_pending?: string[];
   reveal_done?: number;
   reveal_total?: number;
+  trade?: {
+    from: string;
+    give: Record<string, number>;
+    get: Record<string, number>;
+    to: string | null;
+    declined: string[];
+  } | null;
+  last_trade?: {
+    from: string;
+    to: string;
+    give: Record<string, number>;
+    get: Record<string, number>;
+  } | null;
   dev?: {
     deck_left: number;
     hand: Record<string, number>; // only the player in turn

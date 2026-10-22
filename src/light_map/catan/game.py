@@ -3,7 +3,8 @@
 Phases: order (a phased game only: everybody rolls a die, the highest starts), setup (two
 rounds of settlement + road, the second round in reverse order), reveal (a phased game only:
 the tiles and then the number tokens appear one by one), roll, discard (after a 7), robber,
-steal, main (build, buy and play development cards, trade, end turn), road building (two
+steal, main (build, buy and play development cards, trade with the bank or with players,
+end turn), road building (two
 free roads from a development card) and finished.
 "free" is the sandbox mode: no turns and no costs, everything is allowed.
 
@@ -69,6 +70,19 @@ PHASES = (
 )
 
 
+SPANISH_RESOURCES = {
+    "wood": "madera",
+    "brick": "arcilla",
+    "sheep": "oveja",
+    "wheat": "trigo",
+    "ore": "mineral",
+}
+
+
+def _cards_text(cards: dict[str, int]) -> str:
+    return " + ".join(f"{n} {SPANISH_RESOURCES.get(r, r)}" for r, n in cards.items())
+
+
 @dataclass
 class GameState:
     phase: str = FREE
@@ -97,6 +111,9 @@ class GameState:
     free_roads: int = 0
     dev_played: bool = False  # one development card per turn
     bought: list[str] = field(default_factory=list)  # cards bought this turn (not playable yet)
+    # Trading between players
+    trade: dict | None = None  # the open offer: from, give, get, to, declined
+    last_trade: dict | None = None  # the last exchange that happened
 
     def to_dict(self) -> dict:
         return {
@@ -126,6 +143,8 @@ class GameState:
             "free_roads": self.free_roads,
             "dev_played": self.dev_played,
             "bought": list(self.bought),
+            "trade": self.trade,
+            "last_trade": self.last_trade,
         }
 
     @classmethod
@@ -160,6 +179,8 @@ class GameState:
             free_roads=int(data.get("free_roads", 0)),
             dev_played=bool(data.get("dev_played", False)),
             bought=list(data.get("bought", [])),
+            trade=data.get("trade"),
+            last_trade=data.get("last_trade"),
         )
 
 
@@ -612,6 +633,111 @@ class Game:
         self.board.pay(player, {give: self.board.trade_rate(player, give)})
         self.board.add_cards(player, get, 1)
 
+    # Trading between players
+
+    def _clean_cards(self, cards: dict[str, int] | None) -> dict[str, int]:
+        if cards is not None and not isinstance(cards, dict):
+            raise ValueError("Invalid offer")
+        cleaned: dict[str, int] = {}
+        for resource, amount in (cards or {}).items():
+            try:
+                amount = int(amount)
+            except (TypeError, ValueError):
+                raise ValueError("Invalid offer") from None
+            if amount <= 0:
+                continue
+            if resource not in RESOURCE_NAMES:
+                raise ValueError("Unknown resource")
+            cleaned[resource] = amount
+        return cleaned
+
+    def _open_trade(self) -> dict:
+        trade = self.state.trade
+        if not trade:
+            raise ValueError("There is no open trade offer")
+        return trade
+
+    def propose_trade(
+        self,
+        player: str,
+        give: dict[str, int],
+        get: dict[str, int],
+        to: str | None = None,
+    ) -> None:
+        """The player in turn offers cards for cards, to everybody or to one player."""
+        self._require(MAIN)
+        self._require_turn(player)
+        state, board = self.state, self.board
+        if state.trade:
+            raise ValueError("A trade offer is already open")
+        give, get = self._clean_cards(give), self._clean_cards(get)
+        if not give or not get:
+            raise ValueError("Offer at least one card and ask for at least one")
+        if set(give) & set(get):
+            raise ValueError("You cannot trade a resource for the same resource")
+        if not board.can_afford(player, give):
+            raise ValueError(f"{player} does not have those cards")
+        if to is not None:
+            if to == player:
+                raise ValueError("You cannot trade with yourself")
+            if to not in state.order:
+                raise ValueError(f"Unknown player: {to}")
+        state.trade = {"from": player, "give": give, "get": get, "to": to, "declined": []}
+
+    def accept_trade(self, player: str) -> None:
+        """Another player takes the offer: both hands change at once."""
+        self._require(MAIN)
+        state, board = self.state, self.board
+        trade = self._open_trade()
+        if player == trade["from"]:
+            raise ValueError("You cannot accept your own offer")
+        if player not in state.order:
+            raise ValueError(f"Unknown player: {player}")
+        if trade["to"] and trade["to"] != player:
+            raise ValueError(f"This offer is for {trade['to']}")
+        if not board.can_afford(player, trade["get"]):
+            raise ValueError(f"{player} does not have those cards")
+        if not board.can_afford(trade["from"], trade["give"]):
+            state.trade = None  # the offer cannot be honored any more
+            raise ValueError(f"{trade['from']} does not have those cards")
+        for resource, amount in trade["give"].items():
+            board.add_cards(trade["from"], resource, -amount)
+            board.add_cards(player, resource, amount)
+        for resource, amount in trade["get"].items():
+            board.add_cards(player, resource, -amount)
+            board.add_cards(trade["from"], resource, amount)
+        state.last_trade = {
+            "from": trade["from"],
+            "to": player,
+            "give": trade["give"],
+            "get": trade["get"],
+        }
+        state.trade = None
+
+    def decline_trade(self, player: str) -> None:
+        """A player says no; when nobody is left who could accept, the offer closes."""
+        self._require(MAIN)
+        state = self.state
+        trade = self._open_trade()
+        if player == trade["from"]:
+            raise ValueError("You cannot accept your own offer")
+        if player not in state.order:
+            raise ValueError(f"Unknown player: {player}")
+        if player not in trade["declined"]:
+            trade["declined"].append(player)
+        others = [p for p in state.order if p != trade["from"]]
+        recipients = [trade["to"]] if trade["to"] else others
+        if all(p in trade["declined"] for p in recipients):
+            state.trade = None
+
+    def cancel_trade(self, player: str) -> None:
+        """The player who made the offer takes it back."""
+        self._require(MAIN)
+        trade = self._open_trade()
+        if player != trade["from"]:
+            raise ValueError(f"It is {trade['from']}'s offer")
+        self.state.trade = None
+
     def end_turn(self) -> None:
         self._require(MAIN)
         state = self.state
@@ -622,6 +748,8 @@ class Game:
         state.dev_played = False
         state.bought = []
         state.free_roads = 0
+        state.trade = None
+        state.last_trade = None
 
     # Description for the dashboard and the projection
 
@@ -653,6 +781,13 @@ class Game:
             return f"{who} elige a quién robar: {', '.join(state.victims)}."
         if state.phase == ROAD_BUILDING_PHASE:
             return f"{who} pone {state.free_roads} camino(s) gratis."
+        if state.phase == MAIN and state.trade:
+            trade = state.trade
+            for_whom = f" para {trade['to']}" if trade["to"] else ""
+            return (
+                f"Oferta de {trade['from']}{for_whom}: da {_cards_text(trade['give'])} "
+                f"por {_cards_text(trade['get'])}."
+            )
         if state.phase == MAIN:
             return f"Turno de {who}: construye, comercia o termina el turno."
         return f"¡{state.winner} ganó con {WIN_POINTS} puntos!"

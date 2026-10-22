@@ -110,6 +110,14 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
     solo muestran cuántas tiene cada uno); en la proyección cada panel muestra "Des N", los
     caballeros jugados y la etiqueta "EJERCITO+2". Los puntos del panel no incluyen los puntos
     de victoria ocultos.
+- **Comercio entre jugadores:** el jugador en turno, después de tirar los dados, ofrece cartas por
+  cartas a cualquiera o a un jugador en concreto. Reglas: debe dar y pedir al menos una carta, no se
+  cambia un recurso por el mismo recurso, y ambos deben tener las cartas. Solo hay una oferta abierta
+  a la vez y desaparece al terminar el turno. Cada jugador puede **aceptar** (el intercambio se
+  hace al instante), **rechazar** (si todos rechazan, la oferta se cierra) y quien ofreció puede
+  **cancelar**. Con la mano, quien puede aceptar **señala su propio panel** 1 segundo; la
+  proyección muestra arriba "ROJO OFRECE 2 MAD POR 1 TRI" y resalta ese panel. El comercio con el
+  banco (4:1, o 3:1 y 2:1 con puerto) sigue disponible.
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.
@@ -163,7 +171,7 @@ MOCK_CAMERA=1 LIGHT_MAP_WINDOWED=1 python -m light_map run --maps maps/catan.svg
   automáticas y el gesto con manos simuladas.
 - **No probado:** con un proyector real sobre una mesa, ni con una mano real para el gesto.
 - La calibración usada en las pruebas es falsa; para uso real hay que calibrar cámara y proyector.
-- Falta el comercio entre jugadores (hoy solo existe el banco, con puertos).
+- Las reglas del juego base ya están completas. Falta probar todo con el proyector y la mano real.
 - Los paneles de las esquinas y el gesto de señalar se probaron con imágenes generadas y manos
   simuladas, no con el proyector real.
 - Hay pruebas antiguas del repositorio que ya fallaban antes de estos cambios (varias por la

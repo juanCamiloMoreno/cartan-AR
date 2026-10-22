@@ -115,6 +115,8 @@ class CatanManager:
             "order_pending": game.order_pending(),
             "reveal_done": game.reveal_total()[0],
             "reveal_total": game.reveal_total()[1],
+            "trade": state.trade,
+            "last_trade": state.last_trade,
             "dev": {
                 "deck_left": len(game.board.dev.deck),
                 "hand": dict(game.board.dev.hand(game.current_player))
@@ -413,5 +415,34 @@ class CatanManager:
 
     def skip_road_building(self, state: WorldState, player: str) -> None:
         self.game.skip_road_building(player)
+        self._save()
+        self.publish(state)
+
+    # Trading between players
+
+    def propose_trade(
+        self,
+        state: WorldState,
+        player: str,
+        give: dict[str, int],
+        get: dict[str, int],
+        to: str | None = None,
+    ) -> None:
+        self.game.propose_trade(player, give, get, to)
+        self._save()
+        self.publish(state)
+
+    def accept_trade(self, state: WorldState, player: str) -> None:
+        self.game.accept_trade(player)
+        self._save()
+        self.publish(state)
+
+    def decline_trade(self, state: WorldState, player: str) -> None:
+        self.game.decline_trade(player)
+        self._save()
+        self.publish(state)
+
+    def cancel_trade(self, state: WorldState, player: str) -> None:
+        self.game.cancel_trade(player)
         self._save()
         self.publish(state)

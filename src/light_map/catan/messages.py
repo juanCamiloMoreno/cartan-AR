@@ -66,6 +66,22 @@ _PATTERNS: list[tuple[str, str]] = [
     (r"That card was bought this turn", "Esa carta se compró en este turno"),
     (r"Choose two resources", "Elige dos recursos"),
     (r"Choose a resource", "Elige un recurso"),
+    (r"There is no open trade offer", "No hay una oferta de comercio abierta"),
+    (r"Invalid offer", "La oferta no es válida"),
+    (r"A trade offer is already open", "Ya hay una oferta abierta: cancélala primero"),
+    (
+        r"Offer at least one card and ask for at least one",
+        "Ofrece al menos una carta y pide al menos una",
+    ),
+    (
+        r"You cannot trade a resource for the same resource",
+        "No se puede cambiar un recurso por el mismo recurso",
+    ),
+    (r"(\w+) does not have those cards", "{1} no tiene esas cartas"),
+    (r"You cannot accept your own offer", "No puedes aceptar tu propia oferta"),
+    (r"This offer is for (\w+)", "Esta oferta es para {1}"),
+    (r"You cannot trade with yourself", "No puedes comerciar contigo mismo"),
+    (r"It is (\w+)'s offer", "La oferta es de {1}"),
 ]
 _COMPILED = [(re.compile(f"^{pattern}$"), text) for pattern, text in _PATTERNS]
 

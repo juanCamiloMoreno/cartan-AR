@@ -60,6 +60,9 @@ def _hex_to_bgr(color: str) -> tuple[int, int, int]:
     return b, g, r
 
 
+TRADE_CODES = {"wood": "MAD", "brick": "LAD", "sheep": "OVE", "wheat": "TRI", "ore": "MIN"}
+
+
 def game_banner(game: dict | None) -> str | None:
     """Short ASCII text (OpenCV fonts have no accents) with what the table is waiting for."""
     if not game or game.get("phase") in (None, "free"):
@@ -85,6 +88,12 @@ def game_banner(game: dict | None) -> str | None:
         return f"{who} ROBA A: {victims} (SENALA SU PANEL)"
     if phase == "road_building":
         return f"{who} PONE CAMINOS GRATIS"
+    if phase == "main" and game.get("trade"):
+        trade = game["trade"]
+        give = " + ".join(f"{n} {TRADE_CODES.get(r, r)}" for r, n in trade["give"].items())
+        get = " + ".join(f"{n} {TRADE_CODES.get(r, r)}" for r, n in trade["get"].items())
+        for_whom = f" (A {trade['to'].upper()})" if trade.get("to") else ""
+        return f"{trade['from'].upper()} OFRECE {give} POR {get}{for_whom}"
     if phase == "main":
         return f"TURNO DE {who}"
     if phase == "finished":

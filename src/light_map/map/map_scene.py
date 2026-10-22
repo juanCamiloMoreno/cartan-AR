@@ -384,6 +384,12 @@ class ViewingScene(BaseMapScene):
                 if player in (view.game or {}).get("victims", []):
                     return "steal", player
                 continue
+            trade = (view.game or {}).get("trade")
+            if phase == "main" and trade:
+                # an offer is open: the one it is meant for accepts by pointing at their own panel
+                if player != trade["from"] and trade.get("to") in (None, player):
+                    return "trade", player
+                continue
             return "stats", player
         return None
 
@@ -413,6 +419,8 @@ class ViewingScene(BaseMapScene):
                 action = {"action": "CATAN_ROBBER", "payload": json.dumps({"tile": list(value)})}
             elif kind == "steal":
                 action = {"action": "CATAN_STEAL", "payload": json.dumps({"victim": value})}
+            elif kind == "trade":
+                action = {"action": "CATAN_TRADE_ACCEPT", "payload": json.dumps({"player": value})}
             else:
                 payload = json.dumps({"player": value, "mode": "toggle"})
                 action = {"action": "CATAN_STATS_MODE", "payload": payload}
