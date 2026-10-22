@@ -163,7 +163,17 @@ export interface HandDebug {
 }
 
 export interface CatanGameState {
-  phase: 'free' | 'setup' | 'roll' | 'discard' | 'robber' | 'steal' | 'main' | 'finished';
+  phase:
+    | 'free'
+    | 'order'
+    | 'setup'
+    | 'reveal'
+    | 'roll'
+    | 'discard'
+    | 'robber'
+    | 'steal'
+    | 'main'
+    | 'finished';
   current_player: string | null;
   turn: number;
   setup_step: 'settlement' | 'road';
@@ -172,6 +182,13 @@ export interface CatanGameState {
   winner: string | null;
   hint: string;
   costs: Record<string, Record<string, number>>;
+  phased?: boolean;
+  hidden?: boolean;
+  order?: string[];
+  order_rolls?: Record<string, number>;
+  order_pending?: string[];
+  reveal_done?: number;
+  reveal_total?: number;
 }
 
 export type CatanStatsMode = 'simple' | 'resources';
@@ -191,7 +208,7 @@ export interface CatanState {
   dice: [number, number] | null;
   total: number | null;
   producing: { q: number; r: number; resource: string; number: number }[];
-  robber: [number, number];
+  robber: [number, number] | null;
   payouts: Record<string, Record<string, number>>;
   buildings: { vertex: [number, number][]; player: string; kind: 'settlement' | 'city' }[];
   players: string[];

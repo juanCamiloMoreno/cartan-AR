@@ -87,7 +87,7 @@ describe('CatanGame', () => {
     await waitFor(() =>
       expect(api.injectAction).toHaveBeenCalledWith(
         'CATAN_NEW_GAME',
-        JSON.stringify({ players: 3 })
+        JSON.stringify({ players: 3, phased: false })
       )
     );
     expect(screen.queryByRole('button', { name: 'Terminar turno' })).toBeNull();

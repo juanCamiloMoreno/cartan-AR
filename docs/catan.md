@@ -67,6 +67,21 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   oficial (separados por 3 y 4 aristas de costa). Se proyectan y se ven en el dashboard. Quien tenga
   una casa o ciudad en un puerto comercia con el banco a 3:1, o a 2:1 si el puerto es de ese recurso;
   sin puerto sigue siendo 4:1.
+- **Armado del tablero por fases:** al marcar "Armar el tablero por fases" antes de elegir el número
+  de jugadores, la partida empieza con el tablero **oculto** (solo se ven los hexágonos vacíos y los
+  puertos):
+  1. **¿Quién empieza?** Cada jugador tira un dado (con la app o con su dado real). El más alto va
+     primero; si hay empate, solo los empatados vuelven a tirar.
+  2. **Preparación** en ese orden, y de vuelta en orden inverso, sobre el tablero vacío.
+  3. **Revelado:** primero aparecen las casillas una por una en orden aleatorio, y luego las fichas de
+     número siguiendo una espiral desde afuera hacia el centro. Se puede avanzar paso a paso,
+     "Revelar todo", o en modo "Automático" (un paso cada 1.2 segundos). El ladrón aparece junto con
+     el desierto.
+  4. Al terminar el revelado se pagan las cartas de la segunda casa de cada jugador y empieza el
+     turno del primero.
+  Mientras tanto el mapa del proyector queda en blanco y se reescribe al terminar el revelado; las
+  casillas reveladas se pintan encima. Con "Modo libre" se cancela y el tablero vuelve a verse
+  completo.
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.
@@ -108,7 +123,7 @@ Se respetó la regla del proyecto: la lectura se hace desde `WorldState` y solo 
 - **No probado:** con un proyector real sobre una mesa, ni con una mano real para el gesto.
 - La calibración usada en las pruebas es falsa; para uso real hay que calibrar cámara y proyector.
 - Faltan reglas de Catan: camino más largo, ejército más grande, cartas de desarrollo, comercio
-  entre jugadores y armar el tablero por fases en la mesa (hoy aparece de una vez).
+  entre jugadores.
 - Los paneles de las esquinas y el gesto de señalar se probaron con imágenes generadas y manos
   simuladas, no con el proyector real.
 - Hay pruebas antiguas del repositorio que ya fallaban antes de estos cambios (varias por la

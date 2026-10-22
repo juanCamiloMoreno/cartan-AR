@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { injectAction } from '../services/api';
 import type { CatanState } from '../types/system';
 
@@ -12,7 +12,9 @@ const RESOURCES: [string, string][] = [
 
 const PHASE_LABELS: Record<string, string> = {
   free: 'Modo libre',
+  order: '¿Quién empieza?',
   setup: 'Preparación',
+  reveal: 'Revelando el tablero',
   roll: 'Tirar dados',
   discard: 'Descartar',
   robber: 'Ladrón',
@@ -36,6 +38,19 @@ export const CatanGame: React.FC<CatanGameProps> = ({ catan }) => {
   const [give, setGive] = useState('wood');
   const [get, setGet] = useState('ore');
   const [discards, setDiscards] = useState<Record<string, Record<string, number>>>({});
+  const [phased, setPhased] = useState(false);
+  const [auto, setAuto] = useState(false);
+  const [dice, setDice] = useState<Record<string, number>>({});
+  const revealing = catan?.game?.phase === 'reveal';
+
+  useEffect(() => {
+    // Automatic reveal: one step every 1.2 seconds, one tile or token at a time.
+    if (!auto || !revealing) return;
+    const timer = setInterval(() => {
+      injectAction('CATAN_REVEAL_NEXT').catch(() => undefined);
+    }, 1200);
+    return () => clearInterval(timer);
+  }, [auto, revealing]);
 
   const game = catan?.game;
   if (!catan || !game) return null;
@@ -76,12 +91,16 @@ export const CatanGame: React.FC<CatanGameProps> = ({ catan }) => {
       {error && <p className="mb-2 text-xs text-red-600">{error}</p>}
 
       <div className="flex flex-wrap items-center gap-1 text-xs text-gray-600 mb-2">
+        <label className="flex items-center gap-1">
+          <input type="checkbox" checked={phased} onChange={(e) => setPhased(e.target.checked)} />
+          Armar el tablero por fases
+        </label>
         <span>Nueva partida:</span>
         {[2, 3, 4].map((players) => (
           <button
             key={players}
             aria-label={`Nueva partida de ${players}`}
-            onClick={() => send('CATAN_NEW_GAME', { players })}
+            onClick={() => send('CATAN_NEW_GAME', { players, phased })}
             className="px-2 py-0.5 border rounded hover:bg-gray-50"
           >
             {players}
@@ -96,6 +115,73 @@ export const CatanGame: React.FC<CatanGameProps> = ({ catan }) => {
           </button>
         )}
       </div>
+
+      {game.phase === 'order' && (
+        <div className="mb-2 space-y-2" data-testid="order-panel">
+          {Object.entries(game.order_rolls ?? {}).length > 0 && (
+            <p className="text-xs text-gray-700">
+              Ya sacaron:{' '}
+              {Object.entries(game.order_rolls ?? {})
+                .map(([player, value]) => `${player} ${value}`)
+                .join(', ')}
+            </p>
+          )}
+          {(game.order_pending ?? []).map((player) => (
+            <div key={player} className="flex flex-wrap items-center gap-1 text-xs text-black">
+              <span className="font-semibold capitalize w-16">{player}</span>
+              <button
+                aria-label={`Tirar el dado de ${player}`}
+                onClick={() => send('CATAN_ORDER_ROLL', { player })}
+                className="px-2 py-0.5 border rounded hover:bg-gray-50"
+              >
+                Tirar dado
+              </button>
+              <input
+                type="number"
+                min={1}
+                max={6}
+                aria-label={`Dado de ${player}`}
+                value={dice[player] ?? 1}
+                onChange={(e) => setDice({ ...dice, [player]: Number(e.target.value) })}
+                className="w-12 border rounded px-1 py-0.5"
+              />
+              <button
+                aria-label={`Usar el dado de ${player}`}
+                onClick={() => send('CATAN_ORDER_ROLL', { player, value: dice[player] ?? 1 })}
+                className="px-2 py-0.5 border rounded hover:bg-gray-50"
+              >
+                Usar mi dado
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {game.phase === 'reveal' && (
+        <div className="mb-2 space-y-2" data-testid="reveal-panel">
+          <p className="text-xs text-gray-700">
+            {game.reveal_done ?? 0} de {game.reveal_total ?? 0}
+          </p>
+          <div className="flex flex-wrap items-center gap-1 text-xs">
+            <button
+              onClick={() => send('CATAN_REVEAL_NEXT')}
+              className="px-2 py-1 border rounded bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Revelar siguiente
+            </button>
+            <button
+              onClick={() => send('CATAN_REVEAL_ALL')}
+              className="px-2 py-1 border rounded hover:bg-gray-50"
+            >
+              Revelar todo
+            </button>
+            <label className="flex items-center gap-1 text-gray-700">
+              <input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
+              Automático
+            </label>
+          </div>
+        </div>
+      )}
 
       {game.phase === 'roll' && (
         <button

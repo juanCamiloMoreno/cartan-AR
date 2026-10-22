@@ -9,6 +9,7 @@ const RESOURCE_COLORS: Record<string, string> = {
   brick: '#c2572b',
   ore: '#78909c',
   desert: '#e6d3a3',
+  hidden: '#cfd8dc',
 };
 
 const PLAYER_COLORS: Record<string, string> = {
@@ -56,7 +57,9 @@ export const CatanBoard: React.FC<CatanBoardProps> = ({ catan }) => {
   const activePlayer = game?.current_player ?? player ?? catan.players[0];
   const buildingAt = new Map(catan.buildings.map((b) => [JSON.stringify(b.vertex), b]));
   const producing = new Set(catan.producing.map((t) => `${t.q},${t.r}`));
-  const robberTile = board.tiles.find((t) => t.q === catan.robber[0] && t.r === catan.robber[1]);
+  const robberTile = catan.robber
+    ? board.tiles.find((t) => t.q === catan.robber![0] && t.r === catan.robber![1])
+    : undefined;
 
   const send = async (action: string, payload: unknown) => {
     try {
