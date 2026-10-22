@@ -7,6 +7,7 @@ import { CalibrationWizard } from './CalibrationWizard';
 import { TokenLibrary } from './TokenLibrary';
 import { SettingsModal } from './SettingsModal';
 import { CatanPanel } from './CatanPanel';
+import { CatanStats } from './CatanStats';
 import { CatanBoard } from './CatanBoard';
 import { injectAction, interactMenu } from '../services/api';
 
@@ -133,6 +134,9 @@ export const Dashboard = () => {
           </div>
           <div className="mb-6">
             <CatanPanel catan={world?.catan} />
+          </div>
+          <div className="mb-6">
+            <CatanStats catan={world?.catan} />
           </div>
           <div className="mb-6">
             <MapLibrary />

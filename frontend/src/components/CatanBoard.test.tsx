@@ -66,6 +66,75 @@ const catan: CatanState = {
   },
 };
 
+const withEdges: CatanState = {
+  ...catan,
+  roads: [
+    {
+      edge: [
+        [0, 0],
+        [1, 0],
+      ],
+      player: 'azul',
+    },
+  ],
+  board: {
+    ...catan.board!,
+    edges: [
+      {
+        id: [
+          [0, 0],
+          [1, 0],
+        ],
+        x1: 0,
+        y1: 0,
+        x2: 10,
+        y2: 0,
+      },
+      {
+        id: [
+          [0, 0],
+          [0, 1],
+        ],
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 10,
+      },
+    ],
+  },
+};
+
+describe('CatanBoard roads', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(api.injectAction).mockResolvedValue({});
+  });
+
+  it('draws existing roads in their owner color without road mode', () => {
+    render(<CatanBoard catan={withEdges} />);
+    expect(screen.getByTestId('edge-0')).toHaveAttribute('data-road', 'azul');
+    expect(screen.queryByTestId('edge-1')).toBeNull();
+  });
+
+  it('builds a road for the selected player in road mode', async () => {
+    render(<CatanBoard catan={withEdges} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Camino' }));
+    fireEvent.click(screen.getByTestId('edge-1'));
+    await waitFor(() =>
+      expect(api.injectAction).toHaveBeenCalledWith(
+        'CATAN_ROAD',
+        JSON.stringify({
+          player: 'rojo',
+          edge: [
+            [0, 0],
+            [0, 1],
+          ],
+        })
+      )
+    );
+  });
+});
+
 describe('CatanBoard', () => {
   beforeEach(() => {
     vi.clearAllMocks();

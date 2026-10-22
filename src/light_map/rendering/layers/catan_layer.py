@@ -1,7 +1,15 @@
 import cv2
 import numpy as np
 
-from light_map.catan.layout import hex_corners, tile_center, vertex_position
+from light_map.catan.layout import (
+    PANEL_H,
+    PANEL_W,
+    edge_endpoints,
+    hex_corners,
+    panel_rect,
+    tile_center,
+    vertex_position,
+)
 from light_map.core.common_types import ImagePatch, Layer
 from light_map.map.map_system import MapSystem
 from light_map.state.world_state import WorldState
@@ -16,6 +24,17 @@ PLAYER_BGR = {
     "naranja": (0, 140, 255),
 }
 DEFAULT_PLAYER_BGR = (160, 160, 160)
+
+RESOURCE_BGR = {
+    "wood": (50, 125, 46),
+    "brick": (43, 87, 194),
+    "sheep": (101, 204, 156),
+    "wheat": (45, 192, 251),
+    "ore": (146, 144, 120),
+}
+RESOURCE_SHORT = {"wood": "Mad", "brick": "Lad", "sheep": "Ove", "wheat": "Tri", "ore": "Min"}
+PANEL_SIMPLE_H = 140
+ROAD_THICKNESS = 9
 
 DIE_SIZE = 84
 DIE_GAP = 18
@@ -67,6 +86,52 @@ class CatanLayer(Layer):
         cv2.putText(buffer, label, origin, font, 1.5, (20, 20, 20, 255), 8, cv2.LINE_AA)
         cv2.putText(buffer, label, origin, font, 1.5, (255, 255, 255, 255), 3, cv2.LINE_AA)
 
+    @staticmethod
+    def _text(img: np.ndarray, text: str, origin: tuple[int, int], scale: float, color) -> None:
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(img, text, origin, font, scale, (0, 0, 0, 255), 5, cv2.LINE_AA)
+        cv2.putText(img, text, origin, font, scale, color, 2, cv2.LINE_AA)
+
+    def _render_panel(self, player: str, stats: dict) -> np.ndarray:
+        """One player's statistics card. "simple" shows counts, "resources" adds the hand."""
+        resources = stats["mode"] == "resources"
+        height = PANEL_H if resources else PANEL_SIMPLE_H
+        img = np.zeros((height, PANEL_W, 4), dtype=np.uint8)
+        color = PLAYER_BGR.get(player, DEFAULT_PLAYER_BGR)
+        img[:] = (25, 25, 25, 215)
+        cv2.rectangle(img, (0, 0), (PANEL_W - 1, height - 1), (*color, 255), 6)
+        cv2.rectangle(img, (18, 16), (42, 40), (*color, 255), -1)
+        white = (255, 255, 255, 255)
+        self._text(img, player.capitalize(), (54, 38), 0.9, white)
+        self._text(img, f"PV {stats['points']}", (PANEL_W - 110, 38), 0.9, HIGHLIGHT_BGR + (255,))
+        line = f"Casas {stats['settlements']}  Ciud {stats['cities']}  Cam {stats['roads']}"
+        self._text(img, line, (18, 82), 0.62, white)
+        self._text(img, f"Cartas {stats['cards']}", (18, 120), 0.7, white)
+        if resources:
+            slot = (PANEL_W - 24) // 5
+            for i, (res, label) in enumerate(RESOURCE_SHORT.items()):
+                x0 = 12 + i * slot
+                cv2.rectangle(img, (x0, 140), (x0 + slot - 8, 218), (*RESOURCE_BGR[res], 255), -1)
+                cv2.rectangle(img, (x0, 140), (x0 + slot - 8, 218), (20, 20, 20, 255), 2)
+                self._text(img, label, (x0 + 6, 163), 0.5, white)
+                self._text(img, str(stats["hand"][res]), (x0 + 18, 205), 0.9, white)
+        return img
+
+    def _draw_panels(self, buffer: np.ndarray, view) -> None:
+        """Statistics card in each player's corner; top corners are turned to face that seat."""
+        for index, player in enumerate(view.players):
+            stats = (view.stats or {}).get(player)
+            if stats is None:
+                continue
+            panel = self._render_panel(player, stats)
+            x, y, _, h = panel_rect(index, self.width, self.height)
+            if y < self.height / 2:
+                panel = cv2.rotate(panel, cv2.ROTATE_180)
+            else:
+                y += PANEL_H - panel.shape[0]  # keep the card flush with the bottom edge
+            ph, pw = panel.shape[:2]
+            buffer[y : y + ph, x : x + pw] = panel
+
     def _generate_patches(self, current_time: float) -> list[ImagePatch]:
         view = self.state.catan if self.state is not None else None
         if view is None:
@@ -81,6 +146,27 @@ class CatanLayer(Layer):
             buffer = fill
             cv2.polylines(
                 buffer, [poly], True, (*HIGHLIGHT_BGR, 255), thickness=6, lineType=cv2.LINE_AA
+            )
+
+        for road in view.roads:
+            (x1, y1), (x2, y2) = edge_endpoints(road.edge)
+            p1, p2 = self._to_screen([(x1, y1), (x2, y2)])
+            color = PLAYER_BGR.get(road.player, DEFAULT_PLAYER_BGR)
+            cv2.line(
+                buffer,
+                tuple(int(v) for v in p1),
+                tuple(int(v) for v in p2),
+                (20, 20, 20, 255),
+                ROAD_THICKNESS + 4,
+                cv2.LINE_AA,
+            )
+            cv2.line(
+                buffer,
+                tuple(int(v) for v in p1),
+                tuple(int(v) for v in p2),
+                (*color, 255),
+                ROAD_THICKNESS,
+                cv2.LINE_AA,
             )
 
         for building in view.buildings:
@@ -99,5 +185,7 @@ class CatanLayer(Layer):
 
         if view.dice is not None and view.total is not None:
             self._draw_dice(buffer, view.dice, view.total)
+
+        self._draw_panels(buffer, view)
 
         return [ImagePatch(x=0, y=0, width=self.width, height=self.height, data=buffer)]

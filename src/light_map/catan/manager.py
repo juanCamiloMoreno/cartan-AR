@@ -10,6 +10,8 @@ import random
 from light_map.catan.board import (
     Board,
     Building,
+    edge_from_list,
+    edge_to_list,
     roll_dice,
     vertex_from_list,
     vertex_to_list,
@@ -18,12 +20,13 @@ from light_map.catan.layout import (
     BOARD_HEIGHT,
     BOARD_WIDTH,
     SIZE,
+    edge_endpoints,
     hex_corners,
     sidecar_path,
     tile_center,
     vertex_position,
 )
-from light_map.catan.view import BuildingView, CatanView, ProducingTile
+from light_map.catan.view import BuildingView, CatanView, ProducingTile, RoadView
 from light_map.state.world_state import WorldState
 
 
@@ -95,7 +98,12 @@ class CatanManager:
         for vertex in sorted(self.board.all_vertices(), key=vertex_to_list):
             x, y = vertex_position(vertex)
             vertices.append({"id": vertex_to_list(vertex), "x": x, "y": y})
+        edges = []
+        for edge in sorted(self.board.all_edges(), key=edge_to_list):
+            (x1, y1), (x2, y2) = edge_endpoints(edge)
+            edges.append({"id": edge_to_list(edge), "x1": x1, "y1": y1, "x2": x2, "y2": y2})
         return {
+            "edges": edges,
             "width": BOARD_WIDTH,
             "height": BOARD_HEIGHT,
             "size": SIZE,
@@ -128,6 +136,9 @@ class CatanManager:
                 for v, (player, kind) in board.buildings.items()
             ),
             board=self._geometry(),
+            players=tuple(board.players),
+            roads=tuple(RoadView(e, player) for e, player in board.roads.items()),
+            stats={p: board.player_stats(p) for p in board.players},
         )
         state.catan = view
         return view
@@ -139,6 +150,9 @@ class CatanManager:
         if self.board is None:
             return None
         self.last_dice = dice or roll_dice(self.rng)
+        # Production goes straight to the players' hands (fix it by hand if a roll was a mistake).
+        self.board.collect(self.board.production(sum(self.last_dice)))
+        self._save()
         return self.publish(state)
 
     def build(self, state: WorldState, player: str, vertex_cells: list[list[int]]) -> None:
@@ -163,5 +177,30 @@ class CatanManager:
 
     def move_robber(self, state: WorldState, tile: tuple[int, int]) -> None:
         self.board.move_robber((int(tile[0]), int(tile[1])))
+        self._save()
+        self.publish(state)
+
+    def toggle_road(self, state: WorldState, player: str, edge_cells: list[list[int]]) -> None:
+        """Builds a road, or removes the player's own road from that edge."""
+        self.board.toggle_road(edge_from_list(edge_cells), player)
+        self._save()
+        self.publish(state)
+
+    def add_cards(self, state: WorldState, player: str, resource: str, amount: int) -> None:
+        self.board.add_cards(player, resource, int(amount))
+        self._save()
+        self.publish(state)
+
+    def set_player_count(self, state: WorldState, count: int) -> None:
+        self.board.set_player_count(int(count))
+        self._save()
+        self.publish(state)
+
+    def set_stats_mode(self, state: WorldState, player: str | None, mode: str) -> None:
+        """Sets the statistics panel mode ("simple" | "resources" | "toggle") for one player.
+
+        player None (or "all") applies to everybody.
+        """
+        self.board.set_stats_mode(None if player in (None, "all") else player, mode)
         self._save()
         self.publish(state)

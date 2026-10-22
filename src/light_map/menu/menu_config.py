@@ -12,6 +12,8 @@ SUMMON_STEP_1_TIME: float = 2.0  # Seconds for first gesture
 SUMMON_STEP_2_TIME: float = 2.0  # Seconds for second gesture
 CATAN_ROLL_HOLD_TIME: float = 1.0  # Seconds to hold the roll gesture to throw the dice
 CATAN_ROLL_COOLDOWN: float = 4.0  # Seconds before another gesture roll is accepted
+CATAN_STATS_HOLD_TIME: float = 1.0  # Seconds to hold the stats gesture over a player's panel
+CATAN_STATS_COOLDOWN: float = 1.5  # Seconds before the panel can be toggled again
 ZOOM_DELAY: float = 0.5  # Seconds to hold two-hand pointing to enter zoom mode
 MODE_TRANSITION_DELAY: float = 0.5  # Seconds to wait after mode switch before processing input
 
@@ -28,6 +30,7 @@ SUMMON_STEP_2_GESTURE = GestureType.SHAKA
 ZOOM_GESTURE = GestureType.POINTING  # Both hands must be this
 PAN_GESTURE = GestureType.CLOSED_FIST
 CATAN_ROLL_GESTURE = GestureType.ROCK  # Index + pinky, held, throws the Catan dice
+CATAN_STATS_GESTURE = GestureType.GUN  # Thumb + index held over a corner panel toggles its mode
 
 
 # --- Colors (BGR) ---

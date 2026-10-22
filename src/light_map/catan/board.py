@@ -19,8 +19,15 @@ ROW_SIZES = [3, 4, 5, 4, 3]
 # Axial directions in circular order, so consecutive entries are adjacent to each other.
 DIRECTIONS = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
 
+PLAYER_NAMES = ("rojo", "azul", "blanco", "naranja")
+RESOURCE_NAMES = ("wood", "brick", "sheep", "wheat", "ore")
+STATS_MODES = ("simple", "resources")
+MIN_PLAYERS = 2
+MAX_PLAYERS = 4
+
 Coord = tuple[int, int]
 Vertex = frozenset
+Edge = frozenset  # the two adjacent tiles that share the edge
 
 
 class Building(Enum):
@@ -67,6 +74,25 @@ def vertex_from_list(cells: list[list[int]]) -> Vertex:
     return vertex
 
 
+def edges_of(cell: Coord) -> list[Edge]:
+    """The six edges of a tile (each one is shared with a neighbouring tile)."""
+    return [frozenset({cell, (cell[0] + dq, cell[1] + dr)}) for dq, dr in DIRECTIONS]
+
+
+def edge_to_list(edge: Edge) -> list[list[int]]:
+    return [list(cell) for cell in sorted(edge)]
+
+
+def edge_from_list(cells: list[list[int]]) -> Edge:
+    edge = frozenset((int(c[0]), int(c[1])) for c in cells)
+    if len(edge) != 2:
+        raise ValueError("An edge is made of exactly two different tiles")
+    a, b = edge
+    if not neighbors(a, b):
+        raise ValueError("The two tiles of an edge must be adjacent")
+    return edge
+
+
 def roll_dice(rng: random.Random | None = None) -> tuple[int, int]:
     rng = rng or random
     return rng.randint(1, 6), rng.randint(1, 6)
@@ -82,6 +108,10 @@ class Board:
         self.tiles = tiles
         self.robber = robber
         self.buildings: dict[Vertex, tuple[str, Building]] = {}
+        self.roads: dict[Edge, str] = {}
+        self.players: list[str] = list(PLAYER_NAMES)
+        self.hands: dict[str, Counter] = {}
+        self.stats_modes: dict[str, str] = {}
 
     @classmethod
     def random(cls, rng: random.Random | None = None) -> Board:
@@ -115,6 +145,12 @@ class Board:
                 {"vertex": vertex_to_list(v), "player": player, "kind": kind.name.lower()}
                 for v, (player, kind) in self.buildings.items()
             ],
+            "roads": [
+                {"edge": edge_to_list(e), "player": player} for e, player in self.roads.items()
+            ],
+            "players": list(self.players),
+            "hands": {p: {r: n for r, n in h.items() if n} for p, h in self.hands.items()},
+            "stats_modes": dict(self.stats_modes),
         }
 
     @classmethod
@@ -126,6 +162,14 @@ class Board:
                 item["player"],
                 Building[item["kind"].upper()],
             )
+        for item in data.get("roads", []):
+            board.roads[edge_from_list(item["edge"])] = item["player"]
+        board.players = list(data.get("players", PLAYER_NAMES))
+        for player, hand in data.get("hands", {}).items():
+            board.hands[player] = Counter({r: int(n) for r, n in hand.items() if int(n) > 0})
+        board.stats_modes = {
+            p: m for p, m in data.get("stats_modes", {}).items() if m in STATS_MODES
+        }
         return board
 
     def build(self, vertex: Vertex, player: str, kind: Building) -> None:
@@ -177,3 +221,93 @@ class Board:
             if owner and owner[0] != mover and owner[0] not in victims:
                 victims.append(owner[0])
         return victims
+
+    # Roads, hands and per-player statistics
+
+    def all_edges(self) -> set[Edge]:
+        return {e for cell in self.tiles for e in edges_of(cell)}
+
+    def _check_player(self, player: str) -> None:
+        if player not in self.players:
+            raise ValueError(f"Unknown player: {player}")
+
+    def toggle_road(self, edge: Edge, player: str) -> None:
+        """Builds a road, or removes the player's own road if there already is one."""
+        self._check_player(player)
+        if edge not in self.all_edges():
+            raise ValueError("That edge is not on the board")
+        owner = self.roads.get(edge)
+        if owner is None:
+            self.roads[edge] = player
+        elif owner == player:
+            del self.roads[edge]
+        else:
+            raise ValueError("Edge is already occupied by another player")
+
+    def hand(self, player: str) -> Counter:
+        return self.hands.setdefault(player, Counter())
+
+    def add_cards(self, player: str, resource: str, amount: int) -> None:
+        """Adds (or, with a negative amount, removes) cards. The hand never goes below zero."""
+        self._check_player(player)
+        if resource not in RESOURCE_NAMES:
+            raise ValueError(f"Unknown resource: {resource}")
+        hand = self.hand(player)
+        hand[resource] = max(0, hand[resource] + int(amount))
+
+    def collect(self, gains: dict[str, Counter]) -> None:
+        """Adds a roll's production to the players' hands."""
+        for player, counter in gains.items():
+            if player in self.players:
+                for resource, amount in counter.items():
+                    self.add_cards(player, resource, amount)
+
+    def set_player_count(self, count: int) -> None:
+        if not MIN_PLAYERS <= count <= MAX_PLAYERS:
+            raise ValueError(f"Between {MIN_PLAYERS} and {MAX_PLAYERS} players are supported")
+        keep = list(PLAYER_NAMES[:count])
+        for player in self.players:
+            if player not in keep and self.has_pieces(player):
+                raise ValueError(f"{player} still has pieces on the board or cards in hand")
+        self.players = keep
+
+    def has_pieces(self, player: str) -> bool:
+        return (
+            any(owner == player for owner, _ in self.buildings.values())
+            or any(owner == player for owner in self.roads.values())
+            or sum(self.hands.get(player, Counter()).values()) > 0
+        )
+
+    def set_stats_mode(self, player: str | None, mode: str) -> None:
+        """Sets the statistics mode of one player, or of everybody when player is None.
+
+        Mode "toggle" flips a single player between "simple" and "resources".
+        """
+        targets = self.players if player is None else [player]
+        for name in targets:
+            self._check_player(name)
+            new = mode
+            if mode == "toggle":
+                new = "simple" if self.stats_mode(name) == "resources" else "resources"
+            if new not in STATS_MODES:
+                raise ValueError(f"Unknown statistics mode: {mode}")
+            self.stats_modes[name] = new
+
+    def stats_mode(self, player: str) -> str:
+        return self.stats_modes.get(player, "simple")
+
+    def player_stats(self, player: str) -> dict:
+        settlements = sum(
+            1 for p, k in self.buildings.values() if p == player and k is Building.SETTLEMENT
+        )
+        cities = sum(1 for p, k in self.buildings.values() if p == player and k is Building.CITY)
+        hand = self.hands.get(player, Counter())
+        return {
+            "settlements": settlements,
+            "cities": cities,
+            "roads": sum(1 for owner in self.roads.values() if owner == player),
+            "cards": sum(hand.values()),
+            "points": settlements + 2 * cities,
+            "hand": {r: hand.get(r, 0) for r in RESOURCE_NAMES},
+            "mode": self.stats_mode(player),
+        }

@@ -8,6 +8,8 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+from light_map.catan.board import DIRECTIONS, neighbors
+
 
 SIZE = 70  # hex circumradius; the board fits a 1536x864 screen
 PAD = SIZE * 1.2
@@ -46,3 +48,43 @@ def vertex_position(vertex) -> tuple[float, float]:
         sum(x for x, _ in centers) / len(centers),
         sum(y for _, y in centers) / len(centers),
     )
+
+
+def edge_endpoints(edge) -> tuple[tuple[float, float], tuple[float, float]]:
+    """The two vertex positions at the ends of an edge (shared by two adjacent tiles)."""
+    a, b = sorted(edge)
+    ends = [
+        vertex_position(frozenset({a, b, (a[0] + dq, a[1] + dr)}))
+        for dq, dr in DIRECTIONS
+        if neighbors((a[0] + dq, a[1] + dr), b)
+    ]
+    return ends[0], ends[1]
+
+
+# Player panels drawn in the corners of the projection (screen pixels).
+PANEL_W = 360
+PANEL_H = 230  # tallest panel (resources mode); also the hit area for gestures
+PANEL_MARGIN = 20
+DICE_CLEARANCE = 200  # keeps the top-right panel below the dice
+# Seat order: two players sit opposite each other, then the other two corners fill in.
+CORNERS = ("bottom_left", "top_right", "top_left", "bottom_right")
+
+
+def panel_rect(index: int, width: int, height: int) -> tuple[int, int, int, int]:
+    """(x, y, w, h) of the panel of the player sitting at seat `index`."""
+    corner = CORNERS[index % len(CORNERS)]
+    x = PANEL_MARGIN if corner.endswith("left") else width - PANEL_W - PANEL_MARGIN
+    if corner.startswith("bottom"):
+        y = height - PANEL_H - PANEL_MARGIN
+    else:
+        y = PANEL_MARGIN + (DICE_CLEARANCE if corner == "top_right" else 0)
+    return x, y, PANEL_W, PANEL_H
+
+
+def panel_at(point: tuple[float, float], players: list[str], width: int, height: int):
+    """The player whose panel contains the screen point, or None."""
+    for index, player in enumerate(players):
+        x, y, w, h = panel_rect(index, width, height)
+        if x <= point[0] <= x + w and y <= point[1] <= y + h:
+            return player
+    return None

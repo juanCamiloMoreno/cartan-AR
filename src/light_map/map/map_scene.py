@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import json
 import logging
 from typing import TYPE_CHECKING
 
 import numpy as np
 
 import light_map.menu.menu_config as config_vars
+from light_map.catan.layout import panel_at
+from light_map.catan.view import CatanView
 from light_map.core.common_types import (
     Action,
     SceneId,
@@ -244,6 +247,7 @@ class ViewingScene(BaseMapScene):
 
     def __init__(self, context: AppContext):
         super().__init__(context)
+        self._stats_target: str | None = None
 
     def on_enter(self, payload: dict | None = None) -> None:
         self.dwell_tracker.reset()
@@ -272,11 +276,15 @@ class ViewingScene(BaseMapScene):
         if Action.CATAN_ROLL_REQUEST in actions:
             self._queue_catan_roll()
 
+        if Action.CATAN_STATS_REQUEST in actions:
+            self._queue_catan_stats_toggle()
+
         dt = current_time - self.last_update_time if self.last_update_time > 0 else 0.033
         self.last_update_time = current_time
 
         if not inputs:
             self.context.events.cancel(TimerKey.CATAN_ROLL_HOLD)
+            self.context.events.cancel(TimerKey.CATAN_STATS_HOLD)
             self.summon_gesture_start_time = 0.0
             self._update_dwell_and_linger(GestureType.NONE, None, dt, current_time)
             return None
@@ -301,6 +309,7 @@ class ViewingScene(BaseMapScene):
             self.context.events.cancel(TimerKey.INSPECTION_LINGER)
 
         self._update_catan_roll_gesture(primary_gesture)
+        self._update_catan_stats_gesture(inputs)
 
         # Multi-step menu summoning (Step 1: VICTORY for 2s, Step 2: SHAKA for 2s)
         is_step1_ready = self.context.events.has_event(TimerKey.SUMMON_MENU)
@@ -345,6 +354,45 @@ class ViewingScene(BaseMapScene):
             config_vars.CATAN_ROLL_HOLD_TIME,
             lambda: Action.CATAN_ROLL_REQUEST,
             key=TimerKey.CATAN_ROLL_HOLD,
+        )
+
+    def _update_catan_stats_gesture(self, inputs: list[HandInput]) -> None:
+        """Holding the stats gesture over a player's corner panel flips that panel's mode."""
+        events = self.context.events
+        view = getattr(getattr(self.context, "state", None), "catan", None)
+        target = None
+        if isinstance(view, CatanView):
+            config = self.context.app_config
+            for hand in inputs:
+                if hand.gesture == config_vars.CATAN_STATS_GESTURE:
+                    target = panel_at(
+                        hand.proj_pos, list(view.players), config.width, config.height
+                    )
+                    if target:
+                        break
+        if target is None or target != self._stats_target:
+            events.cancel(TimerKey.CATAN_STATS_HOLD)
+        self._stats_target = target
+        if target is None or events.has_event(TimerKey.CATAN_STATS_HOLD):
+            return
+        if events.has_event(TimerKey.CATAN_STATS_COOLDOWN):
+            return
+        events.schedule(
+            config_vars.CATAN_STATS_HOLD_TIME,
+            lambda: Action.CATAN_STATS_REQUEST,
+            key=TimerKey.CATAN_STATS_HOLD,
+        )
+
+    def _queue_catan_stats_toggle(self) -> None:
+        """Asks the app to flip the held panel; the dispatcher routes it to the Catan manager."""
+        state = getattr(self.context, "state", None)
+        if state is not None and self._stats_target:
+            payload = json.dumps({"player": self._stats_target, "mode": "toggle"})
+            state.pending_actions.append({"action": "CATAN_STATS_MODE", "payload": payload})
+        self.context.events.schedule(
+            config_vars.CATAN_STATS_COOLDOWN,
+            lambda: None,
+            key=TimerKey.CATAN_STATS_COOLDOWN,
         )
 
     def _queue_catan_roll(self) -> None:

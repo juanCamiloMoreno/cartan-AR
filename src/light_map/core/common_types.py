@@ -295,6 +295,8 @@ class TimerKey(StrEnum):
     GESTURE_TIMEOUT = "gesture_timeout"
     CATAN_ROLL_HOLD = "catan_roll_hold"
     CATAN_ROLL_COOLDOWN = "catan_roll_cooldown"
+    CATAN_STATS_HOLD = "catan_stats_hold"
+    CATAN_STATS_COOLDOWN = "catan_stats_cooldown"
 
 
 @dataclass(frozen=True)
@@ -393,6 +395,8 @@ class Action(StrEnum):
     # Sent by the roll gesture; distinct from the "CATAN_ROLL" app action it queues, which the
     # dispatcher hands back to the scene after running it.
     CATAN_ROLL_REQUEST = "CATAN_ROLL_REQUEST"
+    # Sent by holding the stats gesture over a player's corner panel (simple <-> resources).
+    CATAN_STATS_REQUEST = "CATAN_STATS_REQUEST"
 
 
 @dataclass

@@ -83,6 +83,10 @@ class ActionDispatcher:
         self.register("CATAN_BUILD", handle_catan_build)
         self.register("CATAN_REMOVE", handle_catan_remove)
         self.register("CATAN_ROBBER", handle_catan_robber)
+        self.register("CATAN_ROAD", handle_catan_road)
+        self.register("CATAN_CARDS", handle_catan_cards)
+        self.register("CATAN_PLAYERS", handle_catan_players)
+        self.register("CATAN_STATS_MODE", handle_catan_stats_mode)
         self.register("TOGGLE_EXCLUSIVE_VISION", handle_toggle_exclusive_vision)
 
     def _handle_menu_transition(self, action_name: str) -> Optional["SceneTransition"]:
@@ -518,6 +522,35 @@ def handle_catan_robber(
 ) -> Optional["SceneTransition"]:
     """Moves the robber. Payload: {"tile": [q, r]}."""
     return _run_catan(app, payload, state, "move_robber", "tile")
+
+
+def handle_catan_road(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Builds or removes a road. Payload: {"player": "rojo", "edge": [[q, r] x2]}."""
+    return _run_catan(app, payload, state, "toggle_road", "player", "edge")
+
+
+def handle_catan_cards(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Adds or removes cards. Payload: {"player": "rojo", "resource": "wood", "amount": 1}."""
+    return _run_catan(app, payload, state, "add_cards", "player", "resource", "amount")
+
+
+def handle_catan_players(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Sets how many players take part (2 to 4). Payload: {"count": 3}."""
+    return _run_catan(app, payload, state, "set_player_count", "count")
+
+
+def handle_catan_stats_mode(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Sets a corner panel mode. Payload: {"player": "rojo" | "all", "mode": "simple" |
+    "resources" | "toggle"}."""
+    return _run_catan(app, payload, state, "set_stats_mode", "player", "mode")
 
 
 def _remove_ping(state: "WorldState", token_id: str):

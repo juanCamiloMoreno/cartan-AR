@@ -129,6 +129,19 @@ export interface CatanBoardGeometry {
     corners: number[][];
   }[];
   vertices: { id: [number, number][]; x: number; y: number }[];
+  edges?: { id: [number, number][]; x1: number; y1: number; x2: number; y2: number }[];
+}
+
+export type CatanStatsMode = 'simple' | 'resources';
+
+export interface CatanPlayerStats {
+  settlements: number;
+  cities: number;
+  roads: number;
+  cards: number;
+  points: number;
+  hand: Record<string, number>;
+  mode: CatanStatsMode;
 }
 
 export interface CatanState {
@@ -139,6 +152,8 @@ export interface CatanState {
   payouts: Record<string, Record<string, number>>;
   buildings: { vertex: [number, number][]; player: string; kind: 'settlement' | 'city' }[];
   players: string[];
+  roads?: { edge: [number, number][]; player: string }[];
+  stats?: Record<string, CatanPlayerStats>;
   board: CatanBoardGeometry | null;
 }
 

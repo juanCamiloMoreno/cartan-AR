@@ -18,10 +18,11 @@ const PLAYER_COLORS: Record<string, string> = {
   naranja: '#ff8c00',
 };
 
-type Mode = 'build' | 'remove' | 'robber';
+type Mode = 'build' | 'road' | 'remove' | 'robber';
 
 const MODE_HINTS: Record<Mode, string> = {
   build: 'Toca una esquina: pone una casa. Si ya hay una casa tuya, la sube a ciudad.',
+  road: 'Toca un borde para poner un camino. Si ya hay uno tuyo, lo quita.',
   remove: 'Toca una casa o ciudad para quitarla.',
   robber: 'Toca un hexágono para mover al ladrón.',
 };
@@ -59,6 +60,12 @@ export const CatanBoard: React.FC<CatanBoardProps> = ({ catan }) => {
     }
   };
 
+  const roadAt = new Map((catan.roads ?? []).map((r) => [JSON.stringify(r.edge), r]));
+
+  const onEdge = (id: [number, number][]) => {
+    if (mode === 'road') send('CATAN_ROAD', { player: activePlayer, edge: id });
+  };
+
   const onVertex = (id: [number, number][]) => {
     if (mode === 'build') send('CATAN_BUILD', { player: activePlayer, vertex: id });
     if (mode === 'remove') send('CATAN_REMOVE', { vertex: id });
@@ -87,6 +94,7 @@ export const CatanBoard: React.FC<CatanBoardProps> = ({ catan }) => {
         {(
           [
             ['build', 'Construir'],
+            ['road', 'Camino'],
             ['remove', 'Quitar'],
             ['robber', 'Ladrón'],
           ] as [Mode, string][]
@@ -159,6 +167,29 @@ export const CatanBoard: React.FC<CatanBoardProps> = ({ catan }) => {
             pointerEvents="none"
           />
         )}
+
+        {(board.edges ?? []).map((edge, index) => {
+          const road = roadAt.get(JSON.stringify(edge.id));
+          if (!road && mode !== 'road') return null;
+          return (
+            <line
+              key={`edge-${index}`}
+              data-testid={`edge-${index}`}
+              data-road={road ? road.player : ''}
+              x1={edge.x1}
+              y1={edge.y1}
+              x2={edge.x2}
+              y2={edge.y2}
+              stroke={road ? (PLAYER_COLORS[road.player] ?? '#999') : '#ffffff'}
+              strokeOpacity={road ? 1 : 0.25}
+              strokeWidth={road ? 9 : 14}
+              strokeLinecap="round"
+              onClick={() => onEdge(edge.id)}
+              style={{ cursor: mode === 'road' ? 'pointer' : 'default' }}
+              pointerEvents={mode === 'road' ? 'stroke' : 'none'}
+            />
+          );
+        })}
 
         {board.vertices.map((vertex, index) => {
           const building = buildingAt.get(JSON.stringify(vertex.id));

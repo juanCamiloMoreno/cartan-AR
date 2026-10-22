@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from light_map.catan.board import vertex_to_list
+from light_map.catan.board import PLAYER_NAMES, edge_to_list, vertex_to_list
 
 
-PLAYERS = ("rojo", "azul", "blanco", "naranja")
+PLAYERS = PLAYER_NAMES
 
 
 @dataclass(frozen=True)
@@ -27,6 +27,12 @@ class BuildingView:
 
 
 @dataclass(frozen=True)
+class RoadView:
+    edge: frozenset
+    player: str
+
+
+@dataclass(frozen=True)
 class CatanView:
     robber: tuple[int, int]
     dice: tuple[int, int] | None = None
@@ -35,6 +41,9 @@ class CatanView:
     payouts: dict[str, dict[str, int]] | None = None
     buildings: tuple[BuildingView, ...] = ()
     board: dict[str, Any] | None = None
+    players: tuple[str, ...] = PLAYERS
+    roads: tuple[RoadView, ...] = ()
+    stats: dict[str, dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -50,6 +59,8 @@ class CatanView:
                 {"vertex": vertex_to_list(b.vertex), "player": b.player, "kind": b.kind}
                 for b in self.buildings
             ],
-            "players": list(PLAYERS),
+            "players": list(self.players),
+            "roads": [{"edge": edge_to_list(r.edge), "player": r.player} for r in self.roads],
+            "stats": self.stats or {},
             "board": self.board,
         }
