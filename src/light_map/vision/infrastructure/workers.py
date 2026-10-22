@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import multiprocessing as mp
+import os
 import time
 
 import cv2
@@ -175,6 +176,19 @@ def aruco_worker(
         logging.info("ArUco Worker stopped.")
 
 
+HAND_CONFIDENCE_ENV = "LIGHT_MAP_HAND_CONFIDENCE"
+DEFAULT_HAND_CONFIDENCE = 0.7
+
+
+def hand_detection_confidence() -> float:
+    """MediaPipe detection threshold; lower it (0.3-0.6) when hands are seen from far or at an angle."""
+    try:
+        value = float(os.environ.get(HAND_CONFIDENCE_ENV, DEFAULT_HAND_CONFIDENCE))
+    except ValueError:
+        return DEFAULT_HAND_CONFIDENCE
+    return min(1.0, max(0.1, value))
+
+
 def hand_worker(
     shm_name: str,
     results_queue: mp.Queue,
@@ -202,8 +216,11 @@ def hand_worker(
 
     # 2. Initialize MediaPipe Hands
     mp_hands = mp_lib.solutions.hands
+    detection_confidence = hand_detection_confidence()
     hands = mp_hands.Hands(
-        max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.5
+        max_num_hands=2,
+        min_detection_confidence=detection_confidence,
+        min_tracking_confidence=min(0.5, detection_confidence),
     )
 
     # Use Aruco detector helper for ROI calculation if needed

@@ -61,6 +61,8 @@ def camera_capture_loop(camera, operator, stop_event):
 def run_app(args):
     if getattr(args, "screen", None) is not None:
         os.environ["LIGHT_MAP_SCREEN"] = str(args.screen)
+    if getattr(args, "hand_confidence", None) is not None:
+        os.environ["LIGHT_MAP_HAND_CONFIDENCE"] = str(args.hand_confidence)
     # Initialize Multiprocessing Manager for shared state mirror
     mp_manager = mp.Manager()
     state_mirror = mp_manager.dict()
@@ -878,6 +880,12 @@ def build_parser() -> tuple[argparse.ArgumentParser, argparse._SubParsersAction]
         type=int,
         default=None,
         help="Monitor to project on (0 is the primary one, 1 the second, ...). Default: primary",
+    )
+    run_parser.add_argument(
+        "--hand-confidence",
+        type=float,
+        default=None,
+        help="Hand detection threshold, 0.1 to 1.0 (default 0.7). Lower it if hands are not seen",
     )
     run_parser.add_argument(
         "--no-stereo",

@@ -55,3 +55,20 @@ def test_without_monitor_info_the_default_behaviour_is_kept(monkeypatch):
 def test_resolution_is_the_one_of_the_chosen_monitor(monkeypatch, two_monitors):
     monkeypatch.setenv(SCREEN_ENV, "1")
     assert get_screen_resolution() == (1371, 771)
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [(None, 0.7), ("0.4", 0.4), ("abc", 0.7), ("5", 1.0), ("0", 0.1)],
+)
+def test_hand_detection_confidence_is_adjustable_and_clamped(monkeypatch, raw, expected):
+    from light_map.vision.infrastructure.workers import (
+        HAND_CONFIDENCE_ENV,
+        hand_detection_confidence,
+    )
+
+    if raw is None:
+        monkeypatch.delenv(HAND_CONFIDENCE_ENV, raising=False)
+    else:
+        monkeypatch.setenv(HAND_CONFIDENCE_ENV, raw)
+    assert hand_detection_confidence() == expected
