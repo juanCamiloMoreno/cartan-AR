@@ -40,6 +40,19 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   señalar, paz, rock, shaka) y qué dedos ve extendidos. Sirve para ver por qué se confunde un gesto
   con otro. Está en `frontend/src/components/HandDebugPanel.tsx`; los datos salen de
   `src/light_map/input/hand_debug.py` (campo `hand_debug` del estado).
+- **Partida con turnos:** además del modo libre (sin reglas) hay una partida con las reglas de
+  Catan. Se inicia con "Nueva partida" (2, 3 o 4 jugadores) en el dashboard y sigue estas fases:
+  1. **Preparación:** dos rondas de casa + camino; la segunda ronda va en orden inverso y paga una
+     carta por cada hexágono vecino de esa casa. Se respeta la regla de distancia y que el camino
+     salga de la casa recién puesta.
+  2. **Tirar dados:** el jugador en turno tira (o ingresa sus dados reales) y se reparte la producción.
+  3. **Un 7:** quienes tengan más de 7 cartas descartan la mitad, el jugador en turno mueve el
+     ladrón y roba una carta al azar a uno de los jugadores con construcciones en ese hexágono.
+  4. **Turno:** construir pagando (camino 1 madera + 1 arcilla, casa 1 de cada uno salvo mineral,
+     ciudad 2 trigo + 3 mineral) con reglas de conexión, comercio con el banco 4:1 y terminar turno.
+  5. **Victoria:** el primero en llegar a 10 puntos (casa 1, ciudad 2) gana. Las piezas están
+     limitadas (15 caminos, 5 casas, 4 ciudades).
+  La proyección muestra arriba qué espera la mesa y resalta el panel del jugador en turno.
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.
@@ -80,8 +93,8 @@ Se respetó la regla del proyecto: la lectura se hace desde `WorldState` y solo 
   automáticas y el gesto con manos simuladas.
 - **No probado:** con un proyector real sobre una mesa, ni con una mano real para el gesto.
 - La calibración usada en las pruebas es falsa; para uso real hay que calibrar cámara y proyector.
-- Faltan reglas de Catan: turnos, costos de construcción, camino más largo, comercio, puertos, cartas
-  de desarrollo, victoria y descarte con 7. Hoy los caminos y las cartas se llevan sin validar reglas.
+- Faltan reglas de Catan: camino más largo, ejército más grande, cartas de desarrollo, comercio
+  entre jugadores y puertos (hoy solo existe el banco 4:1).
 - Los paneles de las esquinas y el gesto de señalar se probaron con imágenes generadas y manos
   simuladas, no con el proyector real.
 - Hay pruebas antiguas del repositorio que ya fallaban antes de estos cambios (varias por la
