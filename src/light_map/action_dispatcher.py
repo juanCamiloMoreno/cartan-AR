@@ -96,6 +96,9 @@ class ActionDispatcher:
         self.register("CATAN_STEAL", handle_catan_steal)
         self.register("CATAN_BANK", handle_catan_bank)
         self.register("CATAN_NEW_BOARD", handle_catan_new_board)
+        self.register("CATAN_DEV_BUY", handle_catan_dev_buy)
+        self.register("CATAN_DEV_PLAY", handle_catan_dev_play)
+        self.register("CATAN_DEV_SKIP", handle_catan_dev_skip)
         self.register("CATAN_ORDER_ROLL", handle_catan_order_roll)
         self.register("CATAN_REVEAL_NEXT", handle_catan_reveal_next)
         self.register("CATAN_REVEAL_ALL", handle_catan_reveal_all)
@@ -687,6 +690,39 @@ def handle_catan_reveal_all(
 ) -> Optional["SceneTransition"]:
     """Reveals everything that is still hidden."""
     return _run_catan(app, payload, state, "reveal_all")
+
+
+def handle_catan_dev_buy(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Buys a development card. Payload: {"player": "rojo"}."""
+    return _run_catan(app, payload, state, "buy_dev_card", "player")
+
+
+def handle_catan_dev_play(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Plays a development card. Payload: {"player": "rojo", "card": "knight"}, plus
+    "resources": ["wood", "ore"] for year_of_plenty or "resource": "wheat" for monopoly."""
+    manager = _catan_manager(app, state)
+    if manager is None:
+        return None
+    try:
+        data = _catan_payload(payload)
+        manager.play_dev_card(
+            state, data["player"], data["card"], data.get("resources"), data.get("resource")
+        )
+    except (ValueError, KeyError, TypeError) as exc:
+        logging.warning("play_dev_card rejected: %s", exc)
+        _catan_refused(app, manager, state, exc)
+    return None
+
+
+def handle_catan_dev_skip(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Gives up the free roads left by a road building card. Payload: {"player": "rojo"}."""
+    return _run_catan(app, payload, state, "skip_road_building", "player")
 
 
 def _remove_ping(state: "WorldState", token_id: str):

@@ -37,7 +37,7 @@ RESOURCE_BGR = {
     "ore": (146, 144, 120),
 }
 RESOURCE_SHORT = {"wood": "Mad", "brick": "Lad", "sheep": "Ove", "wheat": "Tri", "ore": "Min"}
-PANEL_SIMPLE_H = 140
+PANEL_SIMPLE_H = 172
 ROAD_THICKNESS = 9
 
 DIE_SIZE = 84
@@ -83,6 +83,8 @@ def game_banner(game: dict | None) -> str | None:
     if phase == "steal":
         victims = ", ".join(v.upper() for v in game.get("victims") or [])
         return f"{who} ROBA A: {victims} (SENALA SU PANEL)"
+    if phase == "road_building":
+        return f"{who} PONE CAMINOS GRATIS"
     if phase == "main":
         return f"TURNO DE {who}"
     if phase == "finished":
@@ -146,29 +148,40 @@ class CatanLayer(Layer):
         self._text(img, f"PV {stats['points']}", (PANEL_W - 110, 38), 0.9, HIGHLIGHT_BGR + (255,))
         line = f"Casas {stats['settlements']}  Ciud {stats['cities']}  Cam {stats['roads']}"
         self._text(img, line, (18, 82), 0.62, white)
-        self._text(img, f"Cartas {stats['cards']}", (22 if active else 18, 120), 0.7, white)
-        if stats.get("has_longest_road"):
-            cv2.rectangle(img, (132, 100), (216, 130), (*HIGHLIGHT_BGR, 255), -1)
-            cv2.putText(
-                img,
-                "CAMINO+2",
-                (137, 121),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (20, 20, 20, 255),
-                2,
-                cv2.LINE_AA,
-            )
+        cards = f"Cartas {stats['cards']}  Des {stats.get('dev_cards', 0)}"
+        self._text(img, cards, (22 if active else 18, 120), 0.7, white)
         if active:
             self._text(img, "TURNO", (PANEL_W - 140, 122), 0.8, HIGHLIGHT_BGR + (255,))
+        # Row of badges: the two bonus cards and the knights played.
+        badges = (
+            (stats.get("has_longest_road"), "CAMINO+2", 18, 102),
+            (stats.get("has_largest_army"), "EJERCITO+2", 110, 214),
+        )
+        for owned, label, x0, x1 in badges:
+            if owned:
+                cv2.rectangle(img, (x0, 134), (x1, 164), (*HIGHLIGHT_BGR, 255), -1)
+                cv2.putText(
+                    img,
+                    label,
+                    (x0 + 5, 155),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (20, 20, 20, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
+        if stats.get("knights"):
+            self._text(img, f"Cab {stats['knights']}", (222, 156), 0.55, white)
         if resources:
             slot = (PANEL_W - 24) // 5
+            top = PANEL_SIMPLE_H
             for i, (res, label) in enumerate(RESOURCE_SHORT.items()):
                 x0 = 12 + i * slot
-                cv2.rectangle(img, (x0, 140), (x0 + slot - 8, 218), (*RESOURCE_BGR[res], 255), -1)
-                cv2.rectangle(img, (x0, 140), (x0 + slot - 8, 218), (20, 20, 20, 255), 2)
-                self._text(img, label, (x0 + 6, 163), 0.5, white)
-                self._text(img, str(stats["hand"][res]), (x0 + 18, 205), 0.9, white)
+                box = (x0, top, x0 + slot - 8, top + 78)
+                cv2.rectangle(img, box[:2], box[2:], (*RESOURCE_BGR[res], 255), -1)
+                cv2.rectangle(img, box[:2], box[2:], (20, 20, 20, 255), 2)
+                self._text(img, label, (x0 + 6, top + 23), 0.5, white)
+                self._text(img, str(stats["hand"][res]), (x0 + 18, top + 65), 0.9, white)
         return img
 
     def _draw_revealed_tiles(self, buffer: np.ndarray, view) -> None:

@@ -96,6 +96,20 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   uno mande solo. En la proyección aparece "CAMINO+2" en el panel de quien la tiene y el dashboard
   muestra el largo de la línea de cada jugador. Se actualiza al construir, quitar o cuando una casa
   enemiga corta un camino.
+- **Cartas de desarrollo y ejército más grande:** mazo oficial de 25 cartas (14 caballeros, 5 puntos
+  de victoria, 2 construcción de caminos, 2 año de abundancia, 2 monopolio) que se baraja al empezar
+  cada partida. Comprar una cuesta 1 oveja + 1 trigo + 1 mineral (solo en la fase de turno).
+  - Se juega **una carta por turno**, antes o después de tirar los dados, y **nunca una comprada en
+    ese mismo turno**. Los puntos de victoria no se juegan: son secretos y cuentan al ganar.
+  - **Caballero:** igual que un 7 sin descarte (mueve el ladrón y roba); si se juega antes de tirar,
+    después se vuelve a la tirada. **Construcción de caminos:** dos caminos gratis (con los mismos
+    requisitos de conexión), que se pueden dejar a medias. **Año de abundancia:** dos recursos a
+    elección. **Monopolio:** todas las cartas de un recurso de los demás jugadores.
+  - **Ejército más grande:** 3 caballeros jugados, vale 2 puntos y solo lo quita quien tenga más.
+  - En el dashboard el panel "Cartas de desarrollo" muestra las del jugador en turno (los demás
+    solo muestran cuántas tiene cada uno); en la proyección cada panel muestra "Des N", los
+    caballeros jugados y la etiqueta "EJERCITO+2". Los puntos del panel no incluyen los puntos
+    de victoria ocultos.
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.
@@ -149,7 +163,7 @@ MOCK_CAMERA=1 LIGHT_MAP_WINDOWED=1 python -m light_map run --maps maps/catan.svg
   automáticas y el gesto con manos simuladas.
 - **No probado:** con un proyector real sobre una mesa, ni con una mano real para el gesto.
 - La calibración usada en las pruebas es falsa; para uso real hay que calibrar cámara y proyector.
-- Faltan reglas de Catan: ejército más grande, cartas de desarrollo y comercio entre jugadores. El ladrón por gestos se probó con manos simuladas, no con la mano real.
+- Falta el comercio entre jugadores (hoy solo existe el banco, con puertos).
 - Los paneles de las esquinas y el gesto de señalar se probaron con imágenes generadas y manos
   simuladas, no con el proyector real.
 - Hay pruebas antiguas del repositorio que ya fallaban antes de estos cambios (varias por la

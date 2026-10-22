@@ -115,6 +115,15 @@ class CatanManager:
             "order_pending": game.order_pending(),
             "reveal_done": game.reveal_total()[0],
             "reveal_total": game.reveal_total()[1],
+            "dev": {
+                "deck_left": len(game.board.dev.deck),
+                "hand": dict(game.board.dev.hand(game.current_player))
+                if game.current_player
+                else {},
+                "bought": list(state.bought),
+                "played": state.dev_played,
+                "free_roads": state.free_roads,
+            },
         }
 
     def notify(self, state: WorldState, text: str) -> None:
@@ -380,5 +389,29 @@ class CatanManager:
         self.report = report
         self.last_dice = None
         self._write_svg(blank=False)
+        self._save()
+        self.publish(state)
+
+    # Development cards
+
+    def buy_dev_card(self, state: WorldState, player: str) -> None:
+        self.game.buy_dev_card(player)
+        self._save()
+        self.publish(state)
+
+    def play_dev_card(
+        self,
+        state: WorldState,
+        player: str,
+        card: str,
+        resources: list[str] | None = None,
+        resource: str | None = None,
+    ) -> None:
+        self.game.play_dev_card(player, card, resources, resource)
+        self._save()
+        self.publish(state)
+
+    def skip_road_building(self, state: WorldState, player: str) -> None:
+        self.game.skip_road_building(player)
         self._save()
         self.publish(state)

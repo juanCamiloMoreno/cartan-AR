@@ -173,6 +173,7 @@ export interface CatanGameState {
     | 'robber'
     | 'steal'
     | 'main'
+    | 'road_building'
     | 'finished';
   current_player: string | null;
   turn: number;
@@ -189,6 +190,13 @@ export interface CatanGameState {
   order_pending?: string[];
   reveal_done?: number;
   reveal_total?: number;
+  dev?: {
+    deck_left: number;
+    hand: Record<string, number>; // only the player in turn
+    bought: string[];
+    played: boolean;
+    free_roads: number;
+  };
 }
 
 export type CatanStatsMode = 'simple' | 'resources';
@@ -203,6 +211,9 @@ export interface CatanPlayerStats {
   rates?: Record<string, number>;
   longest_road?: number;
   has_longest_road?: boolean;
+  dev_cards?: number;
+  knights?: number;
+  has_largest_army?: boolean;
   mode: CatanStatsMode;
 }
 

@@ -56,6 +56,16 @@ _PATTERNS: list[tuple[str, str]] = [
     (r"Unknown player: (\w+)", "Jugador desconocido: {1}"),
     (r"Unknown balance level: (\w+)", "Nivel de equilibrio desconocido: {1}"),
     (r"There is nothing to remove at this vertex", "No hay nada que quitar en esa esquina"),
+    (r"The development card deck is empty", "Ya no quedan cartas de desarrollo"),
+    (r"That card cannot be played", "Esa carta no se puede jugar"),
+    (
+        r"Only one development card per turn",
+        "Solo se puede jugar una carta de desarrollo por turno",
+    ),
+    (r"(\w+) does not have that card", "{1} no tiene esa carta"),
+    (r"That card was bought this turn", "Esa carta se compró en este turno"),
+    (r"Choose two resources", "Elige dos recursos"),
+    (r"Choose a resource", "Elige un recurso"),
 ]
 _COMPILED = [(re.compile(f"^{pattern}$"), text) for pattern, text in _PATTERNS]
 

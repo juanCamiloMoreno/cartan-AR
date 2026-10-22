@@ -11,6 +11,8 @@ from collections import Counter
 from dataclasses import dataclass
 from enum import Enum
 
+from light_map.catan.devcards import ARMY_POINTS, DevCards
+
 
 RESOURCES = ["wood"] * 4 + ["sheep"] * 4 + ["wheat"] * 4 + ["brick"] * 3 + ["ore"] * 3 + ["desert"]
 NUMBERS = [2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12]
@@ -33,6 +35,7 @@ COSTS: dict[str, dict[str, int]] = {
     "road": {"wood": 1, "brick": 1},
     "settlement": {"wood": 1, "brick": 1, "sheep": 1, "wheat": 1},
     "city": {"wheat": 2, "ore": 3},
+    "dev": {"sheep": 1, "wheat": 1, "ore": 1},
 }
 PIECE_LIMITS = {"road": 15, "settlement": 5, "city": 4}
 WIN_POINTS = 10
@@ -149,6 +152,7 @@ class Board:
         self.players: list[str] = list(PLAYER_NAMES)
         self.hands: dict[str, Counter] = {}
         self.stats_modes: dict[str, str] = {}
+        self.dev = DevCards()
         self.longest_road_owner: str | None = None  # holder of the Longest Road card
         self.ports: dict[Edge, str] = {}  # coast edge -> "any" (3:1) or a resource (2:1)
         from light_map.catan.game import GameState  # game.py imports this module
@@ -195,6 +199,7 @@ class Board:
             "stats_modes": dict(self.stats_modes),
             "ports": [{"edge": edge_to_list(e), "kind": k} for e, k in self.ports.items()],
             "longest_road": self.longest_road_owner,
+            "dev": self.dev.to_dict(),
             "game": self.game.to_dict(),
         }
 
@@ -216,6 +221,7 @@ class Board:
             p: m for p, m in data.get("stats_modes", {}).items() if m in STATS_MODES
         }
         board.longest_road_owner = data.get("longest_road")
+        board.dev = DevCards.from_dict(data.get("dev"))
         for item in data.get("ports", []):
             board.ports[edge_from_list(item["edge"])] = item["kind"]
         if "game" in data:
@@ -362,7 +368,10 @@ class Board:
             "cities": cities,
             "roads": sum(1 for owner in self.roads.values() if owner == player),
             "cards": sum(hand.values()),
-            "points": self.victory_points(player),
+            "points": self.public_points(player),
+            "dev_cards": self.dev.count(player),
+            "knights": self.dev.knights.get(player, 0),
+            "has_largest_army": self.dev.army_owner == player,
             "longest_road": self.longest_road_length(player),
             "has_longest_road": self.longest_road_owner == player,
             "hand": {r: hand.get(r, 0) for r in RESOURCE_NAMES},
@@ -424,9 +433,20 @@ class Board:
             return owner[0] == player
         return any(self.roads.get(e) == player for e in vertex_edges(vertex) if e != edge)
 
+    def public_points(self, player: str) -> int:
+        """Points everybody can see: buildings and the two cards (hidden victory points excluded)."""
+        road = LONGEST_ROAD_POINTS if self.longest_road_owner == player else 0
+        army = ARMY_POINTS if self.dev.army_owner == player else 0
+        return (
+            self.piece_count(player, "settlement")
+            + 2 * self.piece_count(player, "city")
+            + road
+            + army
+        )
+
     def victory_points(self, player: str) -> int:
-        bonus = LONGEST_ROAD_POINTS if self.longest_road_owner == player else 0
-        return self.piece_count(player, "settlement") + 2 * self.piece_count(player, "city") + bonus
+        """All the points, including the victory point cards the player keeps hidden."""
+        return self.public_points(player) + self.dev.victory_points(player)
 
     def longest_road_length(self, player: str) -> int:
         """Roads in the longest unbroken line of the player (no road used twice).

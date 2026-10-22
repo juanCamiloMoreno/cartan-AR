@@ -3,7 +3,8 @@
 Phases: order (a phased game only: everybody rolls a die, the highest starts), setup (two
 rounds of settlement + road, the second round in reverse order), reveal (a phased game only:
 the tiles and then the number tokens appear one by one), roll, discard (after a 7), robber,
-steal, main (build, trade, end turn) and finished.
+steal, main (build, buy and play development cards, trade, end turn), road building (two
+free roads from a development card) and finished.
 "free" is the sandbox mode: no turns and no costs, everything is allowed.
 
 In a phased game the tiles are hidden until the reveal, so the settlements are placed on the
@@ -19,6 +20,7 @@ from dataclasses import dataclass, field
 
 from light_map.catan.board import (
     COSTS,
+    PIECE_LIMITS,
     RESOURCE_NAMES,
     WIN_POINTS,
     Board,
@@ -31,6 +33,14 @@ from light_map.catan.board import (
     vertex_from_list,
     vertex_to_list,
 )
+from light_map.catan.devcards import (
+    KNIGHT,
+    MONOPOLY,
+    PLAYABLE,
+    ROAD_BUILDING,
+    YEAR_OF_PLENTY,
+    DevCards,
+)
 
 
 FREE = "free"
@@ -42,8 +52,21 @@ DISCARD = "discard"
 ROBBER = "robber"
 STEAL = "steal"
 MAIN = "main"
+ROAD_BUILDING_PHASE = "road_building"
 FINISHED = "finished"
-PHASES = (FREE, ORDER, SETUP, REVEAL, ROLL, DISCARD, ROBBER, STEAL, MAIN, FINISHED)
+PHASES = (
+    FREE,
+    ORDER,
+    SETUP,
+    REVEAL,
+    ROLL,
+    DISCARD,
+    ROBBER,
+    STEAL,
+    MAIN,
+    ROAD_BUILDING_PHASE,
+    FINISHED,
+)
 
 
 @dataclass
@@ -69,6 +92,11 @@ class GameState:
     pending_payout: list[tuple[str, Vertex]] = field(default_factory=list)
     order_groups: list[list[str]] = field(default_factory=list)
     order_rolls: dict[str, int] = field(default_factory=dict)
+    # Development cards
+    resume_phase: str = MAIN  # where the game goes after a knight or a road building card
+    free_roads: int = 0
+    dev_played: bool = False  # one development card per turn
+    bought: list[str] = field(default_factory=list)  # cards bought this turn (not playable yet)
 
     def to_dict(self) -> dict:
         return {
@@ -94,6 +122,10 @@ class GameState:
             "pending_payout": [[p, vertex_to_list(v)] for p, v in self.pending_payout],
             "order_groups": [list(group) for group in self.order_groups],
             "order_rolls": dict(self.order_rolls),
+            "resume_phase": self.resume_phase,
+            "free_roads": self.free_roads,
+            "dev_played": self.dev_played,
+            "bought": list(self.bought),
         }
 
     @classmethod
@@ -122,6 +154,12 @@ class GameState:
             pending_payout=[(p, vertex_from_list(v)) for p, v in data.get("pending_payout", [])],
             order_groups=[list(g) for g in data.get("order_groups", [])],
             order_rolls={p: int(n) for p, n in data.get("order_rolls", {}).items()},
+            resume_phase=data.get("resume_phase", MAIN)
+            if data.get("resume_phase") in PHASES
+            else MAIN,
+            free_roads=int(data.get("free_roads", 0)),
+            dev_played=bool(data.get("dev_played", False)),
+            bought=list(data.get("bought", [])),
         )
 
 
@@ -184,6 +222,7 @@ class Game:
         board.roads.clear()
         board.hands.clear()
         board.longest_road_owner = None
+        board.dev = DevCards.new(self.rng)
         board.set_player_count(players)
         board.robber = next(
             (c for c, t in board.tiles.items() if t.resource == "desert"), board.robber
@@ -393,16 +432,107 @@ class Game:
         self._check_win()
 
     def build_road(self, player: str, edge: Edge) -> None:
-        self._require(SETUP, MAIN)
+        self._require(SETUP, MAIN, ROAD_BUILDING_PHASE)
         self._require_turn(player)
         if self.state.phase == SETUP:
             self._setup_road(player, edge)
+            return
+        if self.state.phase == ROAD_BUILDING_PHASE:
+            error = self.board.road_error(edge, player)
+            if error:
+                raise ValueError(error)
+            self.board.toggle_road(edge, player)  # free: the card pays for it
+            self.state.free_roads -= 1
+            if self.state.free_roads <= 0 or not self._can_place_road(player):
+                self._finish_road_building()
+            self._check_win()
             return
         error = self.board.road_error(edge, player)
         if error:
             raise ValueError(error)
         self.board.pay(player, COSTS["road"])
         self.board.toggle_road(edge, player)
+        self._check_win()
+
+    # Development cards
+
+    def _can_place_road(self, player: str) -> bool:
+        board = self.board
+        return any(board.road_error(e, player) is None for e in board.all_edges())
+
+    def _finish_road_building(self) -> None:
+        self.state.free_roads = 0
+        self.state.phase = self._resume()
+
+    def skip_road_building(self, player: str) -> None:
+        """Gives up the free roads that are left."""
+        self._require(ROAD_BUILDING_PHASE)
+        self._require_turn(player)
+        self._finish_road_building()
+
+    def buy_dev_card(self, player: str) -> str:
+        """Pays sheep + wheat + ore for the top card of the deck. Returns the card."""
+        self._require(MAIN)
+        self._require_turn(player)
+        board = self.board
+        if not board.dev.deck:
+            raise ValueError("The development card deck is empty")
+        board.pay(player, COSTS["dev"])
+        card = board.dev.draw(player)
+        self.state.bought.append(card)
+        self._check_win()  # a victory point card can win right away
+        return card
+
+    def play_dev_card(
+        self,
+        player: str,
+        card: str,
+        resources: list[str] | None = None,
+        resource: str | None = None,
+    ) -> None:
+        """Plays a card: one per turn, before or after rolling, never one bought this turn."""
+        self._require(ROLL, MAIN)
+        self._require_turn(player)
+        state, board = self.state, self.board
+        if card not in PLAYABLE:
+            raise ValueError("That card cannot be played")
+        if state.dev_played:
+            raise ValueError("Only one development card per turn")
+        owned = board.dev.hand(player).get(card, 0)
+        if owned <= 0:
+            raise ValueError(f"{player} does not have that card")
+        if owned - state.bought.count(card) <= 0:
+            raise ValueError("That card was bought this turn")
+        if card == YEAR_OF_PLENTY:
+            wanted = list(resources or [])
+            if len(wanted) != 2 or any(r not in RESOURCE_NAMES for r in wanted):
+                raise ValueError("Choose two resources")
+        if card == MONOPOLY and resource not in RESOURCE_NAMES:
+            raise ValueError("Choose a resource")
+
+        board.dev.remove(player, card)
+        state.dev_played = True
+        if card == KNIGHT:
+            board.dev.play_knight(player)
+            state.resume_phase = state.phase
+            state.phase = ROBBER
+        elif card == ROAD_BUILDING:
+            roads_left = PIECE_LIMITS["road"] - board.piece_count(player, "road")
+            if roads_left > 0 and self._can_place_road(player):
+                state.free_roads = min(2, roads_left)
+                state.resume_phase = state.phase
+                state.phase = ROAD_BUILDING_PHASE
+        elif card == YEAR_OF_PLENTY:
+            for wanted_resource in wanted:
+                board.add_cards(player, wanted_resource, 1)
+        elif card == MONOPOLY:
+            for other in board.players:
+                if other == player:
+                    continue
+                taken = board.hands.get(other, Counter()).get(resource, 0)
+                if taken:
+                    board.add_cards(other, resource, -taken)
+                    board.add_cards(player, resource, taken)
         self._check_win()
 
     # Turn flow
@@ -416,6 +546,7 @@ class Game:
         if total == 7:
             hands = {p: sum(self.board.hands.get(p, Counter()).values()) for p in state.order}
             state.discards = players_to_discard(hands)
+            state.resume_phase = MAIN
             state.phase = DISCARD if state.discards else ROBBER
         else:
             self.board.collect(self.board.production(total))
@@ -450,7 +581,7 @@ class Game:
             if sum(self.board.hands.get(p, Counter()).values()) > 0
         ]
         self.state.victims = victims
-        self.state.phase = STEAL if victims else MAIN
+        self.state.phase = STEAL if victims else self._resume()
 
     def steal(self, victim: str) -> str:
         """Takes one random card from the victim. Returns the resource that was stolen."""
@@ -463,8 +594,14 @@ class Game:
         self.board.add_cards(victim, resource, -1)
         self.board.add_cards(self.current_player, resource, 1)
         state.victims = []
-        state.phase = MAIN
+        state.phase = self._resume()
         return resource
+
+    def _resume(self) -> str:
+        """The phase to go back to after the robber (roll if a knight was played before rolling)."""
+        phase = self.state.resume_phase
+        self.state.resume_phase = MAIN
+        return phase
 
     def bank_trade(self, player: str, give: str, get: str) -> None:
         """Trade with the bank at 4:1, or 3:1 / 2:1 with a settlement on a harbor."""
@@ -482,6 +619,9 @@ class Game:
         state.turn += 1
         state.phase = ROLL
         state.last_dice = None
+        state.dev_played = False
+        state.bought = []
+        state.free_roads = 0
 
     # Description for the dashboard and the projection
 
@@ -511,6 +651,8 @@ class Game:
             return f"{who} mueve al ladrón."
         if state.phase == STEAL:
             return f"{who} elige a quién robar: {', '.join(state.victims)}."
+        if state.phase == ROAD_BUILDING_PHASE:
+            return f"{who} pone {state.free_roads} camino(s) gratis."
         if state.phase == MAIN:
             return f"Turno de {who}: construye, comercia o termina el turno."
         return f"¡{state.winner} ganó con {WIN_POINTS} puntos!"

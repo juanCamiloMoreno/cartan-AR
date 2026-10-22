@@ -92,7 +92,7 @@ def port_anchor(edge, tiles) -> tuple[float, float]:
 
 # Player panels drawn in the corners of the projection (screen pixels).
 PANEL_W = 360
-PANEL_H = 230  # tallest panel (resources mode); also the hit area for gestures
+PANEL_H = 262  # tallest panel (resources mode); also the hit area for gestures
 PANEL_MARGIN = 20
 DICE_CLEARANCE = 200  # keeps the top-right panel below the dice
 # Seat order: two players sit opposite each other, then the other two corners fill in.

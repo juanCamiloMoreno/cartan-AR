@@ -104,9 +104,16 @@ export const CatanStats: React.FC<CatanStatsProps> = ({ catan }) => {
                   Camino más largo ({s.longest_road} caminos) · +2 puntos
                 </p>
               )}
+              {s.has_largest_army && (
+                <p data-testid={`army-${player}`} className="mt-1 font-semibold text-amber-700">
+                  Ejército más grande ({s.knights} caballeros) · +2 puntos
+                </p>
+              )}
               <p className="mt-1 text-gray-700">
                 Casas {s.settlements} · Ciudades {s.cities} · Caminos {s.roads}
                 {s.longest_road ? ` (línea de ${s.longest_road})` : ''} · Cartas {s.cards}
+                {s.dev_cards ? ` · Desarrollo ${s.dev_cards}` : ''}
+                {s.knights ? ` · Caballeros ${s.knights}` : ''}
               </p>
               <button
                 onClick={() => setMode(player, showResources ? 'simple' : 'resources')}

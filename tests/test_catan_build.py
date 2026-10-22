@@ -219,6 +219,7 @@ def test_layer_draws_buildings_without_any_roll():
     (patch,), _ = make_layer(state).render()
     x, y = (int(v) for v in vertex_position(vertices_of((0, 0))[0]))
     assert patch.data[y, x, 3] > 0
-    # No tile is highlighted before a roll: a point inside tile (1, 0) stays transparent.
-    tx, ty = (int(v) for v in tile_center(1, 0))
+    # No tile is highlighted before a roll: a point inside the center tile stays transparent
+    # (away from the corner panels).
+    tx, ty = (int(v) for v in tile_center(0, 0))
     assert patch.data[ty + 25, tx, 3] == 0

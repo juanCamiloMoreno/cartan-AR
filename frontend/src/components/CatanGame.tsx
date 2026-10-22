@@ -15,6 +15,7 @@ const PHASE_LABELS: Record<string, string> = {
   order: '¿Quién empieza?',
   setup: 'Preparación',
   reveal: 'Revelando el tablero',
+  road_building: 'Caminos gratis',
   roll: 'Tirar dados',
   discard: 'Descartar',
   robber: 'Ladrón',
