@@ -391,3 +391,17 @@ def test_moving_to_another_panel_restarts_the_hold(context):
 
 def test_panel_constants_are_consistent():
     assert PANEL_W > 0 and PANEL_H > 0
+
+
+def test_fit_board_view_centers_the_board_between_the_panels():
+    from light_map.catan.layout import BOARD_HEIGHT, BOARD_WIDTH, PANEL_W, fit_board_view
+
+    for width, height in ((1920, 1080), (1371, 771)):
+        x, y, zoom = fit_board_view(width, height)
+        assert zoom > 0
+        # centered
+        assert x == pytest.approx(width - x - zoom * BOARD_WIDTH)
+        assert y == pytest.approx(height - y - zoom * BOARD_HEIGHT)
+        # inside the screen and clear of the side panels
+        assert x >= PANEL_W and x + zoom * BOARD_WIDTH <= width - PANEL_W
+        assert y >= 0 and y + zoom * BOARD_HEIGHT <= height

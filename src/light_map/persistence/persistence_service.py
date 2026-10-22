@@ -4,7 +4,7 @@ import os
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
-from light_map.catan.layout import sidecar_path
+from light_map.catan.layout import fit_board_view, sidecar_path
 from light_map.core.common_types import MapRenderState, SessionData, ViewportState
 from light_map.map.session_manager import SessionManager
 from light_map.rendering.svg.loader import SVGLoader
@@ -115,6 +115,8 @@ class PersistenceService:
                         session.viewport.zoom,
                         session.viewport.rotation,
                     )
+                else:
+                    self._fit_catan_board(filename)
                 self.map_config.data.global_settings.last_used_map = filename
                 self.map_config.save()
                 self.app.switch_to_viewing()
@@ -123,12 +125,22 @@ class PersistenceService:
         # Default loading if no session or session load failed
         vp = self.map_config.get_map_viewport(filename)
         self.app.map_system.set_state(vp.x, vp.y, vp.zoom, vp.rotation)
+        if vp.x == 0 and vp.y == 0 and vp.rotation == 0:
+            self._fit_catan_board(filename)
 
         self.map_config.data.global_settings.last_used_map = filename
         self.map_config.save()
 
         # Switch to Viewing Scene to ensure map is visible
         self.app.switch_to_viewing()
+
+    def _fit_catan_board(self, filename: str) -> None:
+        """Centers a Catan board on the projection, as big as fits between the corner panels."""
+        if not os.path.exists(sidecar_path(filename)):
+            return
+        map_system = self.app.map_system
+        x, y, zoom = fit_board_view(map_system.width, map_system.height)
+        map_system.set_state(x, y, zoom, 0)
 
     def save_session(self):
         """Saves the current session (tokens and viewport)."""

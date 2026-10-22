@@ -25,6 +25,43 @@ from light_map.core.storage import StorageManager
 _DEFAULT_STORAGE = StorageManager()
 
 
+def place_borderless_window(name: str, rect: tuple[int, int, int, int]) -> bool:
+    """Makes the OpenCV window `name` a borderless, topmost window exactly over `rect`.
+
+    OpenCV's fullscreen mode sizes the window like the primary monitor, which crops and
+    stretches the picture on a projector with another resolution. Returns False when the window
+    could not be placed (not Windows, or the window was not found).
+    """
+    if sys.platform != "win32":
+        return False
+    import ctypes
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    user32.FindWindowW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR]
+    user32.FindWindowW.restype = wintypes.HWND
+    user32.SetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_long]
+    user32.SetWindowPos.argtypes = [
+        wintypes.HWND,
+        wintypes.HWND,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        wintypes.UINT,
+    ]
+    hwnd = user32.FindWindowW(None, name)
+    if not hwnd:
+        return False
+    gwl_style, ws_popup, ws_visible = -16, 0x80000000, 0x10000000
+    swp_framechanged, swp_showwindow = 0x0020, 0x0040
+    user32.SetWindowLongW(hwnd, gwl_style, ctypes.c_long(ws_popup | ws_visible).value)
+    x, y, w, h = rect
+    return bool(
+        user32.SetWindowPos(hwnd, wintypes.HWND(-1), x, y, w, h, swp_framechanged | swp_showwindow)
+    )
+
+
 class ProjectorWindow:
     def __init__(self, name: str, width: int, height: int):
         self.name = name
@@ -36,12 +73,14 @@ class ProjectorWindow:
         # Create window and set to fullscreen
         cv2.namedWindow(self.name, cv2.WINDOW_NORMAL)
         rect = screen_rect()
+        placed = False
         if rect is not None:
-            # Fullscreen opens on the monitor the window sits on, so move it to the projector.
             cv2.moveWindow(self.name, rect[0], rect[1])
             cv2.resizeWindow(self.name, rect[2], rect[3])
             cv2.waitKey(50)
-        cv2.setWindowProperty(self.name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            placed = place_borderless_window(self.name, rect)
+        if not placed:
+            cv2.setWindowProperty(self.name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         # Briefly pump the loop to help initialization
         cv2.waitKey(1)
 
@@ -234,6 +273,31 @@ def selected_screen() -> int | None:
         return None
 
 
+def enable_dpi_awareness() -> None:
+    """Makes the process report real pixels on every monitor (Windows display scaling).
+
+    Without it a projector set to 140% scaling is reported as 1371x771 although it really has
+    1920x1080 pixels, and everything drawn on it is stretched and cropped.
+    """
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    try:
+        # Per-monitor v2: -4
+        if ctypes.windll.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4)):
+            return
+    except Exception:
+        pass
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
+
 def list_monitors() -> list[tuple[int, int, int, int]]:
     """(x, y, width, height) of every monitor in physical pixels, primary first.
 
@@ -244,10 +308,7 @@ def list_monitors() -> list[tuple[int, int, int, int]]:
     import ctypes
     from ctypes import wintypes
 
-    try:
-        ctypes.windll.user32.SetProcessDPIAware()
-    except Exception:
-        pass
+    enable_dpi_awareness()
 
     monitors: list[tuple[int, int, int, int]] = []
     callback_type = ctypes.WINFUNCTYPE(

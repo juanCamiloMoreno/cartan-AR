@@ -70,6 +70,14 @@ DICE_CLEARANCE = 200  # keeps the top-right panel below the dice
 CORNERS = ("bottom_left", "top_right", "top_left", "bottom_right")
 
 
+def fit_board_view(width: int, height: int) -> tuple[float, float, float]:
+    """(x, y, zoom) that centers the board and makes it as big as fits between the panels."""
+    free_width = width - 2 * (PANEL_W + 2 * PANEL_MARGIN)
+    free_height = height - 2 * PANEL_MARGIN
+    zoom = max(0.1, min(free_width / BOARD_WIDTH, free_height / BOARD_HEIGHT))
+    return (width - zoom * BOARD_WIDTH) / 2, (height - zoom * BOARD_HEIGHT) / 2, zoom
+
+
 def panel_rect(index: int, width: int, height: int) -> tuple[int, int, int, int]:
     """(x, y, w, h) of the panel of the player sitting at seat `index`."""
     corner = CORNERS[index % len(CORNERS)]
