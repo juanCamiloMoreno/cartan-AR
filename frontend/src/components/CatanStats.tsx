@@ -99,8 +99,14 @@ export const CatanStats: React.FC<CatanStatsProps> = ({ catan }) => {
                 </span>
                 <span className="font-bold text-amber-600">{s.points} PV</span>
               </div>
+              {s.has_longest_road && (
+                <p data-testid={`longest-${player}`} className="mt-1 font-semibold text-amber-700">
+                  Camino más largo ({s.longest_road} caminos) · +2 puntos
+                </p>
+              )}
               <p className="mt-1 text-gray-700">
-                Casas {s.settlements} · Ciudades {s.cities} · Caminos {s.roads} · Cartas {s.cards}
+                Casas {s.settlements} · Ciudades {s.cities} · Caminos {s.roads}
+                {s.longest_road ? ` (línea de ${s.longest_road})` : ''} · Cartas {s.cards}
               </p>
               <button
                 onClick={() => setMode(player, showResources ? 'simple' : 'resources')}

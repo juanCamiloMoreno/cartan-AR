@@ -36,6 +36,8 @@ COSTS: dict[str, dict[str, int]] = {
 }
 PIECE_LIMITS = {"road": 15, "settlement": 5, "city": 4}
 WIN_POINTS = 10
+LONGEST_ROAD_MIN = 5  # roads in a row needed to hold the Longest Road card
+LONGEST_ROAD_POINTS = 2
 BANK_RATE = 4  # cards of one kind for one of another
 
 
@@ -147,6 +149,7 @@ class Board:
         self.players: list[str] = list(PLAYER_NAMES)
         self.hands: dict[str, Counter] = {}
         self.stats_modes: dict[str, str] = {}
+        self.longest_road_owner: str | None = None  # holder of the Longest Road card
         self.ports: dict[Edge, str] = {}  # coast edge -> "any" (3:1) or a resource (2:1)
         from light_map.catan.game import GameState  # game.py imports this module
 
@@ -191,6 +194,7 @@ class Board:
             "hands": {p: {r: n for r, n in h.items() if n} for p, h in self.hands.items()},
             "stats_modes": dict(self.stats_modes),
             "ports": [{"edge": edge_to_list(e), "kind": k} for e, k in self.ports.items()],
+            "longest_road": self.longest_road_owner,
             "game": self.game.to_dict(),
         }
 
@@ -211,6 +215,7 @@ class Board:
         board.stats_modes = {
             p: m for p, m in data.get("stats_modes", {}).items() if m in STATS_MODES
         }
+        board.longest_road_owner = data.get("longest_road")
         for item in data.get("ports", []):
             board.ports[edge_from_list(item["edge"])] = item["kind"]
         if "game" in data:
@@ -228,11 +233,13 @@ class Board:
             # A city can only replace the owner's own settlement.
             raise ValueError("A city must replace the player's own settlement")
         self.buildings[vertex] = (player, kind)
+        self.refresh_longest_road()  # an enemy settlement can cut a road
 
     def remove(self, vertex: Vertex) -> None:
         if vertex not in self.buildings:
             raise ValueError("There is nothing to remove at this vertex")
         del self.buildings[vertex]
+        self.refresh_longest_road()
 
     def all_vertices(self) -> set[Vertex]:
         return {v for cell in self.tiles for v in vertices_of(cell)}
@@ -290,6 +297,7 @@ class Board:
             del self.roads[edge]
         else:
             raise ValueError("Edge is already occupied by another player")
+        self.refresh_longest_road()
 
     def hand(self, player: str) -> Counter:
         return self.hands.setdefault(player, Counter())
@@ -354,7 +362,9 @@ class Board:
             "cities": cities,
             "roads": sum(1 for owner in self.roads.values() if owner == player),
             "cards": sum(hand.values()),
-            "points": settlements + 2 * cities,
+            "points": self.victory_points(player),
+            "longest_road": self.longest_road_length(player),
+            "has_longest_road": self.longest_road_owner == player,
             "hand": {r: hand.get(r, 0) for r in RESOURCE_NAMES},
             "rates": {r: self.trade_rate(player, r) for r in RESOURCE_NAMES},
             "mode": self.stats_mode(player),
@@ -415,7 +425,70 @@ class Board:
         return any(self.roads.get(e) == player for e in vertex_edges(vertex) if e != edge)
 
     def victory_points(self, player: str) -> int:
-        return self.piece_count(player, "settlement") + 2 * self.piece_count(player, "city")
+        bonus = LONGEST_ROAD_POINTS if self.longest_road_owner == player else 0
+        return self.piece_count(player, "settlement") + 2 * self.piece_count(player, "city") + bonus
+
+    def longest_road_length(self, player: str) -> int:
+        """Roads in the longest unbroken line of the player (no road used twice).
+
+        A settlement or city of another player on a vertex stops the line there; the player's own
+        buildings and empty vertices let it through, and branches and loops are allowed.
+        """
+        edges = [e for e, owner in self.roads.items() if owner == player]
+        if not edges:
+            return 0
+        ends = {e: edge_vertices(e) for e in edges}
+        at: dict[Vertex, list[Edge]] = {}
+        for edge, (a, b) in ends.items():
+            at.setdefault(a, []).append(edge)
+            at.setdefault(b, []).append(edge)
+
+        def blocked(vertex: Vertex) -> bool:
+            owner = self.buildings.get(vertex)
+            return owner is not None and owner[0] != player
+
+        best = 0
+        used: set[Edge] = set()
+
+        def walk(vertex: Vertex, length: int) -> None:
+            nonlocal best
+            best = max(best, length)
+            if best == len(edges):
+                return
+            for edge in at.get(vertex, []):
+                if edge in used:
+                    continue
+                a, b = ends[edge]
+                nxt = b if a == vertex else a
+                used.add(edge)
+                if blocked(nxt):
+                    best = max(best, length + 1)  # the line ends at the enemy building
+                else:
+                    walk(nxt, length + 1)
+                used.discard(edge)
+
+        for start in at:
+            walk(start, 0)
+            if best == len(edges):
+                break
+        return best
+
+    def refresh_longest_road(self) -> None:
+        """Gives the Longest Road card to whoever deserves it after a change.
+
+        It needs LONGEST_ROAD_MIN roads and is taken only by a strictly longer line. If the holder
+        is cut and ends tied with others, the holder keeps it; if the new longest line is tied
+        between other players, the card is set aside until one of them leads alone.
+        """
+        lengths = {p: self.longest_road_length(p) for p in self.players}
+        best = max(lengths.values(), default=0)
+        if best < LONGEST_ROAD_MIN:
+            self.longest_road_owner = None
+            return
+        leaders = [p for p, n in lengths.items() if n == best]
+        if self.longest_road_owner in leaders:
+            return
+        self.longest_road_owner = leaders[0] if len(leaders) == 1 else None
 
     def can_afford(self, player: str, cost: dict[str, int]) -> bool:
         hand = self.hands.get(player, Counter())

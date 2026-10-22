@@ -183,6 +183,7 @@ class Game:
         board.buildings.clear()
         board.roads.clear()
         board.hands.clear()
+        board.longest_road_owner = None
         board.set_player_count(players)
         board.robber = next(
             (c for c, t in board.tiles.items() if t.resource == "desert"), board.robber

@@ -201,6 +201,8 @@ export interface CatanPlayerStats {
   points: number;
   hand: Record<string, number>;
   rates?: Record<string, number>;
+  longest_road?: number;
+  has_longest_road?: boolean;
   mode: CatanStatsMode;
 }
 

@@ -147,6 +147,18 @@ class CatanLayer(Layer):
         line = f"Casas {stats['settlements']}  Ciud {stats['cities']}  Cam {stats['roads']}"
         self._text(img, line, (18, 82), 0.62, white)
         self._text(img, f"Cartas {stats['cards']}", (22 if active else 18, 120), 0.7, white)
+        if stats.get("has_longest_road"):
+            cv2.rectangle(img, (132, 100), (216, 130), (*HIGHLIGHT_BGR, 255), -1)
+            cv2.putText(
+                img,
+                "CAMINO+2",
+                (137, 121),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (20, 20, 20, 255),
+                2,
+                cv2.LINE_AA,
+            )
         if active:
             self._text(img, "TURNO", (PANEL_W - 140, 122), 0.8, HIGHLIGHT_BGR + (255,))
         if resources:

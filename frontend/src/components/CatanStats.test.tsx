@@ -113,3 +113,18 @@ describe('CatanStats', () => {
     expect(await screen.findByText('boom')).toBeInTheDocument();
   });
 });
+
+describe('CatanStats longest road', () => {
+  it('shows the card and the line length of the holder only', () => {
+    const state = make('simple');
+    state.stats = {
+      rojo: { ...state.stats!.rojo, has_longest_road: true, longest_road: 6, points: 6 },
+      azul: { ...state.stats!.azul, has_longest_road: false, longest_road: 3 },
+    };
+    render(<CatanStats catan={state} />);
+    expect(screen.getByTestId('longest-rojo')).toHaveTextContent('Camino más largo (6 caminos)');
+    expect(screen.getByTestId('longest-rojo')).toHaveTextContent('+2 puntos');
+    expect(screen.queryByTestId('longest-azul')).toBeNull();
+    expect(screen.getByTestId('stats-azul')).toHaveTextContent('línea de 3');
+  });
+});
