@@ -28,6 +28,7 @@ def run_calibration_sequence(
     projector_height: int = 1080,
     rows: int = 13,
     cols: int = 18,
+    border_size: int = 30,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
     """
     Runs the projector calibration sequence using an existing camera instance.
@@ -39,7 +40,7 @@ def run_calibration_sequence(
     try:
         # Generate Pattern
         pattern_img, params = generate_calibration_pattern(
-            projector_width, projector_height, rows, cols, border_size=30
+            projector_width, projector_height, rows, cols, border_size=border_size
         )
 
         win.update_image(pattern_img)

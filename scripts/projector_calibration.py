@@ -63,6 +63,7 @@ def run_projector_calibrate(args):
                     camera,
                     projector_width=projector_width,
                     projector_height=projector_height,
+                    border_size=args.pattern_border,
                 )
 
                 if result is not None:
@@ -184,6 +185,13 @@ if __name__ == "__main__":
         help="Monitor to project on (0 is the primary one, 1 the second, ...)",
     )
     parser.add_argument("--camera", type=int, default=0, help="Index of the camera to use")
+    parser.add_argument(
+        "--pattern-border",
+        type=int,
+        default=30,
+        help="Margin in projector pixels around the checkerboard. Raise it (150-250) to shrink "
+        "the pattern when the camera does not see the whole projected area",
+    )
     args = parser.parse_args()
     if args.screen is not None:
         os.environ["LIGHT_MAP_SCREEN"] = str(args.screen)
