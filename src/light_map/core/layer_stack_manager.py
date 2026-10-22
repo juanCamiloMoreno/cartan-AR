@@ -75,7 +75,9 @@ class LayerStackManager:
         self.selection_progress_layer = SelectionProgressLayer(state, context)
         self.ping_layer = PingLayer(state, context)
         self.cursor_layer = CursorLayer(state, context)
-        self.hand_feedback_layer = HandFeedbackLayer(state, config.width, config.height)
+        self.hand_feedback_layer = HandFeedbackLayer(
+            state, config.width, config.height, context.map_system
+        )
         self.tactical_overlay_layer = TacticalOverlayLayer(
             state, context.map_system, context.visibility_engine
         )

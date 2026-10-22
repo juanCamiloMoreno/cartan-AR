@@ -35,6 +35,23 @@ def hex_corners(q: int, r: int, radius: float = SIZE - 2) -> list[tuple[float, f
     ]
 
 
+def cell_at_world(x: float, y: float) -> tuple[int, int]:
+    """Axial (q, r) of the hexagon that contains a point of the board (inverse of tile_center)."""
+    r = (y - BOARD_HEIGHT / 2) / (SIZE * 1.5)
+    q = (x - BOARD_WIDTH / 2) / (SIZE * math.sqrt(3)) - r / 2
+    cx, cz = q, r
+    cy = -cx - cz
+    rx, ry, rz = round(cx), round(cy), round(cz)
+    dx, dy, dz = abs(rx - cx), abs(ry - cy), abs(rz - cz)
+    if dx > dy and dx > dz:
+        rx = -ry - rz
+    elif dy > dz:
+        ry = -rx - rz
+    else:
+        rz = -rx - ry
+    return int(rx), int(rz)
+
+
 def sidecar_path(svg_path: str) -> str:
     """Path of the board description stored next to an SVG map (catan.svg -> catan.board.json)."""
     path = Path(svg_path)

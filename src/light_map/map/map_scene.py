@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import light_map.menu.menu_config as config_vars
-from light_map.catan.layout import panel_at
+from light_map.catan.layout import cell_at_world, panel_at
 from light_map.catan.view import CatanView
 from light_map.core.common_types import (
     Action,
@@ -247,7 +247,7 @@ class ViewingScene(BaseMapScene):
 
     def __init__(self, context: AppContext):
         super().__init__(context)
-        self._stats_target: str | None = None
+        self._stats_target: tuple[str, object] | None = None
 
     def on_enter(self, payload: dict | None = None) -> None:
         self.dwell_tracker.reset()
@@ -356,20 +356,41 @@ class ViewingScene(BaseMapScene):
             key=TimerKey.CATAN_ROLL_HOLD,
         )
 
-    def _update_catan_stats_gesture(self, inputs: list[HandInput]) -> None:
-        """Holding the stats gesture over a player's corner panel flips that panel's mode."""
-        events = self.context.events
+    def _catan_pointing_target(self, inputs: list[HandInput]) -> tuple[str, object] | None:
+        """What the pointing hand is aiming at, depending on what the game is waiting for.
+
+        ("robber", (q, r)) a hexagon while the robber must move, ("steal", player) a victim's
+        panel while a card must be stolen, ("stats", player) any panel the rest of the time.
+        """
         view = getattr(getattr(self.context, "state", None), "catan", None)
-        target = None
-        if isinstance(view, CatanView):
-            config = self.context.app_config
-            for hand in inputs:
-                if hand.gesture == config_vars.CATAN_STATS_GESTURE:
-                    target = panel_at(
-                        hand.proj_pos, list(view.players), config.width, config.height
-                    )
-                    if target:
-                        break
+        if not isinstance(view, CatanView):
+            return None
+        config = self.context.app_config
+        phase = (view.game or {}).get("phase")
+        for hand in inputs:
+            if hand.gesture != config_vars.CATAN_STATS_GESTURE:
+                continue
+            if phase == "robber":
+                world = self.context.map_system.screen_to_world(*hand.proj_pos)
+                cell = cell_at_world(*world)
+                tiles = {(t["q"], t["r"]) for t in (view.board or {}).get("tiles", [])}
+                if cell in tiles and cell != view.robber:
+                    return "robber", cell
+                continue
+            player = panel_at(hand.proj_pos, list(view.players), config.width, config.height)
+            if not player:
+                continue
+            if phase == "steal":
+                if player in (view.game or {}).get("victims", []):
+                    return "steal", player
+                continue
+            return "stats", player
+        return None
+
+    def _update_catan_stats_gesture(self, inputs: list[HandInput]) -> None:
+        """Holding the pointing gesture on a target (hexagon or panel) triggers its action."""
+        events = self.context.events
+        target = self._catan_pointing_target(inputs)
         if target is None or target != self._stats_target:
             events.cancel(TimerKey.CATAN_STATS_HOLD)
         self._stats_target = target
@@ -384,11 +405,18 @@ class ViewingScene(BaseMapScene):
         )
 
     def _queue_catan_stats_toggle(self) -> None:
-        """Asks the app to flip the held panel; the dispatcher routes it to the Catan manager."""
+        """Asks the app for the held target's action; the dispatcher routes it to the manager."""
         state = getattr(self.context, "state", None)
         if state is not None and self._stats_target:
-            payload = json.dumps({"player": self._stats_target, "mode": "toggle"})
-            state.pending_actions.append({"action": "CATAN_STATS_MODE", "payload": payload})
+            kind, value = self._stats_target
+            if kind == "robber":
+                action = {"action": "CATAN_ROBBER", "payload": json.dumps({"tile": list(value)})}
+            elif kind == "steal":
+                action = {"action": "CATAN_STEAL", "payload": json.dumps({"victim": value})}
+            else:
+                payload = json.dumps({"player": value, "mode": "toggle"})
+                action = {"action": "CATAN_STATS_MODE", "payload": payload}
+            state.pending_actions.append(action)
         self.context.events.schedule(
             config_vars.CATAN_STATS_COOLDOWN,
             lambda: None,

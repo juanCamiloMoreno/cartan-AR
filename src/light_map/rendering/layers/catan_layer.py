@@ -79,10 +79,10 @@ def game_banner(game: dict | None) -> str | None:
         pending = ", ".join(f"{p.upper()} {n}" for p, n in (game.get("discards") or {}).items())
         return f"SALIO 7: DESCARTAN {pending}"
     if phase == "robber":
-        return f"{who} MUEVE AL LADRON"
+        return f"{who} MUEVE AL LADRON: SENALA UN HEXAGONO"
     if phase == "steal":
         victims = ", ".join(v.upper() for v in game.get("victims") or [])
-        return f"{who} ROBA A: {victims}"
+        return f"{who} ROBA A: {victims} (SENALA SU PANEL)"
     if phase == "main":
         return f"TURNO DE {who}"
     if phase == "finished":

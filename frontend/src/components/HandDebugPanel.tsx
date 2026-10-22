@@ -62,7 +62,7 @@ const GESTURE_USES: Record<string, string> = {
   OPEN_PALM: 'selecciona (puertas, menú)',
   CLOSED_FIST: 'mueve el mapa',
   GUN: 'sin uso por ahora',
-  POINTING: 'mantener 1 s sobre un panel cambia su modo',
+  POINTING: 'mantener 1 s: mueve el ladrón, elige a quién robar o cambia el modo de un panel',
   VICTORY: 'mantener 2 s: paso 1 del menú',
   ROCK: 'mantener 1 s: tira los dados',
   SHAKA: 'paso 2 del menú',

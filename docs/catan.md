@@ -82,6 +82,11 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   Mientras tanto el mapa del proyector queda en blanco y se reescribe al terminar el revelado; las
   casillas reveladas se pintan encima. Con "Modo libre" se cancela y el tablero vuelve a verse
   completo.
+- **Ladrón con la mano:** cuando sale un 7 y toca mover el ladrón, el jugador **señala con el
+  índice** el hexágono donde lo quiere y mantiene 1 segundo: el hexágono se ilumina y un anillo se
+  llena; al completarse se mueve (no vale el hexágono donde ya está). Si hay a quién robar, se
+  **señala el panel** del jugador elegido otro segundo. También se puede hacer con el mouse en el
+  dashboard. Fuera de esas fases, señalar un panel cambia su modo simple/recursos.
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.
@@ -136,7 +141,7 @@ MOCK_CAMERA=1 LIGHT_MAP_WINDOWED=1 python -m light_map run --maps maps/catan.svg
 - **No probado:** con un proyector real sobre una mesa, ni con una mano real para el gesto.
 - La calibración usada en las pruebas es falsa; para uso real hay que calibrar cámara y proyector.
 - Faltan reglas de Catan: camino más largo, ejército más grande, cartas de desarrollo, comercio
-  entre jugadores.
+  entre jugadores. El ladrón por gestos se probó con manos simuladas, no con la mano real.
 - Los paneles de las esquinas y el gesto de señalar se probaron con imágenes generadas y manos
   simuladas, no con el proyector real.
 - Hay pruebas antiguas del repositorio que ya fallaban antes de estos cambios (varias por la

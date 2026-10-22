@@ -33,6 +33,11 @@ def with_catan(state):
     CatanManager(board=board).publish(state)
 
 
+def hand_patch(layer, t):
+    """The ring around the hand (highlights of a target are separate patches)."""
+    return next(p for p in layer._generate_patches(t) if (p.width, p.height) == (PATCH_W, PATCH_H))
+
+
 def drawn_pixels(patch):
     return int(np.count_nonzero(patch.data[..., 3]))
 
@@ -75,15 +80,15 @@ def test_every_gesture_has_a_distinct_label_drawing(layer, state):
 
 def test_roll_gesture_progress_grows_while_held_and_resets_when_released(layer, state):
     state.inputs = [hand(config_vars.CATAN_ROLL_GESTURE, (900, 500))]
-    start = drawn_pixels(layer._generate_patches(10.0)[0])
-    half = drawn_pixels(layer._generate_patches(10.0 + config_vars.CATAN_ROLL_HOLD_TIME / 2)[0])
-    full = drawn_pixels(layer._generate_patches(10.0 + config_vars.CATAN_ROLL_HOLD_TIME)[0])
+    start = drawn_pixels(hand_patch(layer, 10.0))
+    half = drawn_pixels(hand_patch(layer, 10.0 + config_vars.CATAN_ROLL_HOLD_TIME / 2))
+    full = drawn_pixels(hand_patch(layer, 10.0 + config_vars.CATAN_ROLL_HOLD_TIME))
     assert start < half < full
 
     state.inputs = [hand(GestureType.OPEN_PALM, (900, 500))]
     layer._generate_patches(20.0)
     state.inputs = [hand(config_vars.CATAN_ROLL_GESTURE, (900, 500))]
-    again = drawn_pixels(layer._generate_patches(20.5)[0])
+    again = drawn_pixels(hand_patch(layer, 20.5))
     assert again == start  # the hold started over
 
 
@@ -93,14 +98,14 @@ def test_stats_gesture_only_shows_progress_over_a_panel(layer, state):
     over = (x + w // 2, y + h // 2)
 
     state.inputs = [hand(config_vars.CATAN_STATS_GESTURE, (900, 500))]  # middle of the table
-    away = drawn_pixels(layer._generate_patches(0.0)[0])
+    away = drawn_pixels(hand_patch(layer, 0.0))
     layer._generate_patches(1.0)
-    away_later = drawn_pixels(layer._generate_patches(1.0)[0])
+    away_later = drawn_pixels(hand_patch(layer, 1.0))
     assert away == away_later  # no ring growing
 
     state.inputs = [hand(config_vars.CATAN_STATS_GESTURE, over)]
-    start = drawn_pixels(layer._generate_patches(5.0)[0])
-    full = drawn_pixels(layer._generate_patches(5.0 + config_vars.CATAN_STATS_HOLD_TIME)[0])
+    start = drawn_pixels(hand_patch(layer, 5.0))
+    full = drawn_pixels(hand_patch(layer, 5.0 + config_vars.CATAN_STATS_HOLD_TIME))
     assert full > start
 
 
