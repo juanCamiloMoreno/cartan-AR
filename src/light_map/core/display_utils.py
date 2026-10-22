@@ -35,6 +35,12 @@ class ProjectorWindow:
 
         # Create window and set to fullscreen
         cv2.namedWindow(self.name, cv2.WINDOW_NORMAL)
+        rect = screen_rect()
+        if rect is not None:
+            # Fullscreen opens on the monitor the window sits on, so move it to the projector.
+            cv2.moveWindow(self.name, rect[0], rect[1])
+            cv2.resizeWindow(self.name, rect[2], rect[3])
+            cv2.waitKey(50)
         cv2.setWindowProperty(self.name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         # Briefly pump the loop to help initialization
         cv2.waitKey(1)
@@ -214,11 +220,79 @@ def setup_logging(level=logging.INFO, log_file: str | None = None):
     logging.info("Logging initialized at level %s", logging.getLevelName(level))
 
 
+SCREEN_ENV = "LIGHT_MAP_SCREEN"
+
+
+def selected_screen() -> int | None:
+    """Index of the monitor chosen with --screen (0 is the primary one), or None."""
+    raw = os.environ.get(SCREEN_ENV)
+    if raw is None or raw == "":
+        return None
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return None
+
+
+def list_monitors() -> list[tuple[int, int, int, int]]:
+    """(x, y, width, height) of every monitor in physical pixels, primary first.
+
+    Only implemented for Windows; elsewhere it returns an empty list.
+    """
+    if sys.platform != "win32":
+        return []
+    import ctypes
+    from ctypes import wintypes
+
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
+    monitors: list[tuple[int, int, int, int]] = []
+    callback_type = ctypes.WINFUNCTYPE(
+        ctypes.c_int,
+        wintypes.HMONITOR,
+        wintypes.HDC,
+        ctypes.POINTER(wintypes.RECT),
+        wintypes.LPARAM,
+    )
+
+    def callback(_monitor, _dc, rect, _data):
+        r = rect.contents
+        monitors.append((r.left, r.top, r.right - r.left, r.bottom - r.top))
+        return 1
+
+    ctypes.windll.user32.EnumDisplayMonitors(None, None, callback_type(callback), 0)
+    # The primary monitor is the one whose origin is (0, 0).
+    monitors.sort(key=lambda m: (m[0] != 0 or m[1] != 0, m[0], m[1]))
+    return monitors
+
+
+def screen_rect(index: int | None = None) -> tuple[int, int, int, int] | None:
+    """Rectangle of the selected monitor, or None to use the default behaviour."""
+    index = selected_screen() if index is None else index
+    if index is None:
+        return None
+    monitors = list_monitors()
+    if not monitors:
+        return None
+    if index >= len(monitors):
+        logging.warning(
+            "Screen %d not found (there are %d). Using the last one.", index, len(monitors)
+        )
+        index = len(monitors) - 1
+    return monitors[index]
+
+
 def get_screen_resolution() -> tuple[int, int]:
     """
-    Detects the current screen resolution using tkinter.
+    Detects the current screen resolution using tkinter, or the monitor chosen with --screen.
     Returns (width, height).
     """
+    rect = screen_rect()
+    if rect is not None:
+        return rect[2], rect[3]
     try:
         if tk is None:
             raise RuntimeError("tkinter is not available")

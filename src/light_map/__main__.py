@@ -59,6 +59,8 @@ def camera_capture_loop(camera, operator, stop_event):
 
 
 def run_app(args):
+    if getattr(args, "screen", None) is not None:
+        os.environ["LIGHT_MAP_SCREEN"] = str(args.screen)
     # Initialize Multiprocessing Manager for shared state mirror
     mp_manager = mp.Manager()
     state_mirror = mp_manager.dict()
@@ -870,6 +872,12 @@ def build_parser() -> tuple[argparse.ArgumentParser, argparse._SubParsersAction]
         type=camera_index,
         default=0,
         help="Index of the camera to use (0 is the first one, 1 the second, ...)",
+    )
+    run_parser.add_argument(
+        "--screen",
+        type=int,
+        default=None,
+        help="Monitor to project on (0 is the primary one, 1 the second, ...). Default: primary",
     )
     run_parser.add_argument(
         "--no-stereo",

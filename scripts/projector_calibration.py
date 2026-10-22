@@ -55,7 +55,7 @@ def run_projector_calibrate(args):
 
     # Initialize Camera
     logger.info("Initializing Camera...")
-    with Camera() as camera:
+    with Camera(index=args.camera) as camera:
         for step in args.steps:
             if step == "projector":
                 logger.info("--- Step 1: Projector Calibration (Homography) ---")
@@ -177,5 +177,14 @@ if __name__ == "__main__":
         default=["projector", "ppi", "extrinsics"],
         help="Calibration steps to run (default: all)",
     )
+    parser.add_argument(
+        "--screen",
+        type=int,
+        default=None,
+        help="Monitor to project on (0 is the primary one, 1 the second, ...)",
+    )
+    parser.add_argument("--camera", type=int, default=0, help="Index of the camera to use")
     args = parser.parse_args()
+    if args.screen is not None:
+        os.environ["LIGHT_MAP_SCREEN"] = str(args.screen)
     run_projector_calibrate(args)
