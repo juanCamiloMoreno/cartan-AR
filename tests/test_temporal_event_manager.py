@@ -134,3 +134,12 @@ def test_schedule_mutation():
     manager.check()
     assert atom.value == 20
     assert atom.timestamp > initial_ts
+
+
+def test_events_due_at_the_same_instant_run_in_scheduling_order():
+    now = [0.0]
+    manager = TemporalEventManager(time_provider=lambda: now[0])
+    manager.schedule(1.0, lambda: "first")
+    manager.schedule(1.0, lambda: "second")
+    now[0] = 2.0
+    assert manager.check() == ["first", "second"]

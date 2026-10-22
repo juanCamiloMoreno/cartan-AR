@@ -1,4 +1,5 @@
 import heapq
+import itertools
 import logging
 import time
 from collections.abc import Callable, Hashable
@@ -22,8 +23,10 @@ class TemporalEventManager:
     ):
         self.time_provider = time_provider
         self.state = state
-        # Priority queue: (target_time, callback, key)
-        self._events: list[tuple[float, Callable[[], Any], Hashable | None]] = []
+        # Priority queue: (target_time, order, callback, key). The order breaks ties between events
+        # due at the same instant (the Windows clock is coarse), which callbacks cannot do.
+        self._events: list[tuple[float, int, Callable[[], Any], Hashable | None]] = []
+        self._order = itertools.count()
         # Index for cancellation: key -> target_time (to detect stale heap entries)
         self._keys: dict[Hashable, float] = {}
 
@@ -47,7 +50,7 @@ class TemporalEventManager:
         logging.debug(
             f"TemporalEventManager: Scheduled event (key={key}, delay={delay:.3f}s, target={target_time:.3f})"
         )
-        heapq.heappush(self._events, (target_time, callback, key))
+        heapq.heappush(self._events, (target_time, next(self._order), callback, key))
 
     def schedule_mutation(
         self,
@@ -97,7 +100,7 @@ class TemporalEventManager:
 
         while self._events and self._events[0][0] <= current_time:
             # Pop the earliest event
-            target_time, callback, key = heapq.heappop(self._events)
+            target_time, _order, callback, key = heapq.heappop(self._events)
 
             # If it has a key, check if it was cancelled or replaced
             if key is not None:
