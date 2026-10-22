@@ -18,16 +18,19 @@ from light_map.catan.board import (
     vertex_to_list,
 )
 from light_map.catan.game import FREE, Game
+from light_map.catan.generator import BoardRules, GenerationReport, generate_board
 from light_map.catan.layout import (
     BOARD_HEIGHT,
     BOARD_WIDTH,
     SIZE,
     edge_endpoints,
     hex_corners,
+    port_anchor,
     sidecar_path,
     tile_center,
     vertex_position,
 )
+from light_map.catan.svg import build_svg
 from light_map.catan.view import BuildingView, CatanView, ProducingTile, RoadView
 from light_map.state.world_state import WorldState
 
@@ -39,6 +42,7 @@ class CatanManager:
         self.last_dice: tuple[int, int] | None = None
         self._loaded_from: str | None = None
         self._sidecar: str | None = None
+        self.report: GenerationReport | None = None
 
     # Loading and saving
 
@@ -127,7 +131,24 @@ class CatanManager:
         for edge in sorted(self.board.all_edges(), key=edge_to_list):
             (x1, y1), (x2, y2) = edge_endpoints(edge)
             edges.append({"id": edge_to_list(edge), "x1": x1, "y1": y1, "x2": x2, "y2": y2})
+        ports = []
+        for edge, kind in self.board.ports.items():
+            (x1, y1), (x2, y2) = edge_endpoints(edge)
+            ax, ay = port_anchor(edge, self.board.tiles)
+            ports.append(
+                {
+                    "id": edge_to_list(edge),
+                    "kind": kind,
+                    "x1": x1,
+                    "y1": y1,
+                    "x2": x2,
+                    "y2": y2,
+                    "x": ax,
+                    "y": ay,
+                }
+            )
         return {
+            "ports": ports,
             "edges": edges,
             "width": BOARD_WIDTH,
             "height": BOARD_HEIGHT,
@@ -165,6 +186,7 @@ class CatanManager:
             board=self._geometry(),
             players=tuple(board.players),
             game=self._game_view(game),
+            generator=self.report.to_dict() if self.report else None,
             roads=tuple(RoadView(e, player) for e, player in board.roads.items()),
             stats={p: board.player_stats(p) for p in board.players},
         )
@@ -281,5 +303,22 @@ class CatanManager:
 
     def bank_trade(self, state: WorldState, player: str, give: str, get: str) -> None:
         self.game.bank_trade(player, give, get)
+        self._save()
+        self.publish(state)
+
+    # New board
+
+    def new_board(self, state: WorldState, rules: dict | None = None) -> None:
+        """Generates a new board with the given checklist, rewrites the map and starts over."""
+        board, report = generate_board(BoardRules.from_dict(rules), self.rng)
+        self.board = board
+        self.report = report
+        self.last_dice = None
+        if self._loaded_from:
+            try:
+                with open(self._loaded_from, "w", encoding="utf-8") as f:
+                    f.write(build_svg(board.tiles))
+            except OSError as exc:
+                logging.error("CatanManager: could not write %s: %s", self._loaded_from, exc)
         self._save()
         self.publish(state)

@@ -147,6 +147,7 @@ class Board:
         self.players: list[str] = list(PLAYER_NAMES)
         self.hands: dict[str, Counter] = {}
         self.stats_modes: dict[str, str] = {}
+        self.ports: dict[Edge, str] = {}  # coast edge -> "any" (3:1) or a resource (2:1)
         from light_map.catan.game import GameState  # game.py imports this module
 
         self.game = GameState()
@@ -189,6 +190,7 @@ class Board:
             "players": list(self.players),
             "hands": {p: {r: n for r, n in h.items() if n} for p, h in self.hands.items()},
             "stats_modes": dict(self.stats_modes),
+            "ports": [{"edge": edge_to_list(e), "kind": k} for e, k in self.ports.items()],
             "game": self.game.to_dict(),
         }
 
@@ -209,6 +211,8 @@ class Board:
         board.stats_modes = {
             p: m for p, m in data.get("stats_modes", {}).items() if m in STATS_MODES
         }
+        for item in data.get("ports", []):
+            board.ports[edge_from_list(item["edge"])] = item["kind"]
         if "game" in data:
             from light_map.catan.game import GameState
 
@@ -352,6 +356,7 @@ class Board:
             "cards": sum(hand.values()),
             "points": settlements + 2 * cities,
             "hand": {r: hand.get(r, 0) for r in RESOURCE_NAMES},
+            "rates": {r: self.trade_rate(player, r) for r in RESOURCE_NAMES},
             "mode": self.stats_mode(player),
         }
 
@@ -430,3 +435,16 @@ class Board:
             if tile is not None and tile.resource != "desert":
                 gains[tile.resource] += 1
         return gains
+
+    def trade_rate(self, player: str, give: str) -> int:
+        """Cards of `give` the player pays for one card from the bank: 4, 3 or 2."""
+        rate = BANK_RATE
+        for edge, kind in self.ports.items():
+            owner = any(self.buildings.get(v, (None,))[0] == player for v in edge_vertices(edge))
+            if not owner:
+                continue
+            if kind == give:
+                rate = min(rate, 2)
+            elif kind == "any":
+                rate = min(rate, 3)
+        return rate

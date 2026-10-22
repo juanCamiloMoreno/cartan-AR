@@ -12,7 +12,6 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from light_map.catan.board import (
-    BANK_RATE,
     COSTS,
     RESOURCE_NAMES,
     WIN_POINTS,
@@ -279,12 +278,12 @@ class Game:
         return resource
 
     def bank_trade(self, player: str, give: str, get: str) -> None:
-        """Four cards of one kind for one of another."""
+        """Trade with the bank at 4:1, or 3:1 / 2:1 with a settlement on a harbor."""
         self._require(MAIN)
         self._require_turn(player)
         if give not in RESOURCE_NAMES or get not in RESOURCE_NAMES or give == get:
             raise ValueError("Choose two different resources")
-        self.board.pay(player, {give: BANK_RATE})
+        self.board.pay(player, {give: self.board.trade_rate(player, give)})
         self.board.add_cards(player, get, 1)
 
     def end_turn(self) -> None:

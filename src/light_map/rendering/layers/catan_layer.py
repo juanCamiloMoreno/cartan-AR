@@ -1,3 +1,5 @@
+import math
+
 import cv2
 import numpy as np
 
@@ -145,6 +147,50 @@ class CatanLayer(Layer):
                 self._text(img, str(stats["hand"][res]), (x0 + 18, 205), 0.9, white)
         return img
 
+    def _draw_ports(self, buffer: np.ndarray, view) -> None:
+        """Harbors: two piers from the coast edge to a marker with the trade ratio."""
+        ports = ((view.board or {}).get("ports")) or []
+        if not ports:
+            return
+        ox, oy = self.map_system.world_to_screen(0, 0)
+        ux, uy = self.map_system.world_to_screen(100, 0)
+        scale = max(0.3, math.hypot(ux - ox, uy - oy) / 100)
+        radius = int(min(max(26 * scale, 16), 46))
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        for port in ports:
+            anchor = tuple(int(v) for v in self.map_system.world_to_screen(port["x"], port["y"]))
+            for key in (("x1", "y1"), ("x2", "y2")):
+                end = tuple(
+                    int(v) for v in self.map_system.world_to_screen(port[key[0]], port[key[1]])
+                )
+                cv2.line(buffer, end, anchor, (30, 30, 30, 255), 9, cv2.LINE_AA)
+                cv2.line(buffer, end, anchor, (235, 235, 235, 255), 5, cv2.LINE_AA)
+            kind = port["kind"]
+            fill = (225, 225, 225) if kind == "any" else RESOURCE_BGR.get(kind, (200, 200, 200))
+            cv2.circle(buffer, anchor, radius, (30, 30, 30, 255), -1, cv2.LINE_AA)
+            cv2.circle(buffer, anchor, radius - 4, (*fill, 255), -1, cv2.LINE_AA)
+            label = "3:1" if kind == "any" else "2:1"
+            size = radius / 36
+            (tw, th), _ = cv2.getTextSize(label, font, size, 2)
+            text_color = (
+                (20, 20, 20, 255) if kind in ("any", "wheat", "sheep") else (255, 255, 255, 255)
+            )
+            origin = (anchor[0] - tw // 2, anchor[1] + (th // 2 if kind == "any" else 0))
+            cv2.putText(buffer, label, origin, font, size, text_color, 2, cv2.LINE_AA)
+            if kind != "any":
+                code = RESOURCE_SHORT[kind]
+                (cw, ch), _ = cv2.getTextSize(code, font, size * 0.8, 2)
+                cv2.putText(
+                    buffer,
+                    code,
+                    (anchor[0] - cw // 2, anchor[1] + ch + 6),
+                    font,
+                    size * 0.8,
+                    text_color,
+                    2,
+                    cv2.LINE_AA,
+                )
+
     def _draw_banner(self, buffer: np.ndarray, view) -> None:
         """What the table is waiting for, centered at the top."""
         text = game_banner(view.game)
@@ -195,6 +241,8 @@ class CatanLayer(Layer):
             cv2.polylines(
                 buffer, [poly], True, (*HIGHLIGHT_BGR, 255), thickness=6, lineType=cv2.LINE_AA
             )
+
+        self._draw_ports(buffer, view)
 
         for road in view.roads:
             (x1, y1), (x2, y2) = edge_endpoints(road.edge)

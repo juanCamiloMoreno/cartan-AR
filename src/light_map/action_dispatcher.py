@@ -93,6 +93,7 @@ class ActionDispatcher:
         self.register("CATAN_DISCARD", handle_catan_discard)
         self.register("CATAN_STEAL", handle_catan_steal)
         self.register("CATAN_BANK", handle_catan_bank)
+        self.register("CATAN_NEW_BOARD", handle_catan_new_board)
         self.register("TOGGLE_EXCLUSIVE_VISION", handle_toggle_exclusive_vision)
 
     def _handle_menu_transition(self, action_name: str) -> Optional["SceneTransition"]:
@@ -604,6 +605,24 @@ def handle_catan_bank(
 ) -> Optional["SceneTransition"]:
     """Four cards of one kind for one of another. Payload: {"player", "give", "get"}."""
     return _run_catan(app, payload, state, "bank_trade", "player", "give", "get")
+
+
+def handle_catan_new_board(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Generates a new board. Payload: the rules checklist, e.g. {"allow_adjacent_red": false,
+    "balance": "fair"} (missing rules use their defaults)."""
+    manager = _catan_manager(app, state)
+    if manager is None:
+        return None
+    try:
+        manager.new_board(state, _catan_payload(payload))
+    except (ValueError, KeyError, TypeError) as exc:
+        logging.warning("new_board rejected: %s", exc)
+        app.notifications.add_notification(f"Catan: {exc}")
+        return None
+    app.load_map(app.current_map_path)  # redraw the map with the new tiles
+    return None
 
 
 def _remove_ping(state: "WorldState", token_id: str):

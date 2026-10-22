@@ -56,6 +56,23 @@ def edge_endpoints(edge) -> tuple[tuple[float, float], tuple[float, float]]:
     return vertex_position(first), vertex_position(second)
 
 
+PORT_DISTANCE = SIZE * 0.62  # how far from the coast edge the harbor marker is drawn
+
+
+def port_anchor(edge, tiles) -> tuple[float, float]:
+    """Where the marker of a harbor on a coast edge goes: just outside the edge, in the sea."""
+    from light_map.catan.ports import outward_direction
+
+    (x1, y1), (x2, y2) = edge_endpoints(edge)
+    land = next(c for c in edge if c in tiles)
+    dq, dr = outward_direction(edge, tiles)
+    lx, ly = tile_center(*land)
+    sx, sy = tile_center(land[0] + dq, land[1] + dr)
+    length = math.hypot(sx - lx, sy - ly) or 1.0
+    ux, uy = (sx - lx) / length, (sy - ly) / length
+    return (x1 + x2) / 2 + ux * PORT_DISTANCE, (y1 + y2) / 2 + uy * PORT_DISTANCE
+
+
 # Player panels drawn in the corners of the projection (screen pixels).
 PANEL_W = 360
 PANEL_H = 230  # tallest panel (resources mode); also the hit area for gestures

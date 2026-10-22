@@ -45,6 +45,7 @@ class CatanView:
     roads: tuple[RoadView, ...] = ()
     stats: dict[str, dict[str, Any]] | None = None
     game: dict[str, Any] | None = None
+    generator: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -64,5 +65,6 @@ class CatanView:
             "roads": [{"edge": edge_to_list(r.edge), "player": r.player} for r in self.roads],
             "stats": self.stats or {},
             "game": self.game,
+            "generator": self.generator,
             "board": self.board,
         }
