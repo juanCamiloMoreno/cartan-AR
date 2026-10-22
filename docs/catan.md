@@ -34,6 +34,11 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   ciudades, caminos y total de cartas) y **recursos** (además, cuántas cartas de cada recurso). Se
   cambia el modo desde el dashboard (por jugador o para todos) o con la mano: mantener el gesto
   **pistola** (pulgar e índice) 1 segundo sobre el panel de un jugador.
+- **Depuración de manos:** el dashboard tiene un recuadro "Depuración de manos" que dibuja el
+  esqueleto que detecta la cámara, el nombre del gesto que decide la app (palma, puño, pistola,
+  señalar, paz, rock, shaka) y qué dedos ve extendidos. Sirve para ver por qué se confunde un gesto
+  con otro. Está en `frontend/src/components/HandDebugPanel.tsx`; los datos salen de
+  `src/light_map/input/hand_debug.py` (campo `hand_debug` del estado).
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.

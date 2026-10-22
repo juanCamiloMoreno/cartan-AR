@@ -8,6 +8,7 @@ import { TokenLibrary } from './TokenLibrary';
 import { SettingsModal } from './SettingsModal';
 import { CatanPanel } from './CatanPanel';
 import { CatanStats } from './CatanStats';
+import { HandDebugPanel } from './HandDebugPanel';
 import { CatanBoard } from './CatanBoard';
 import { injectAction, interactMenu } from '../services/api';
 
@@ -137,6 +138,9 @@ export const Dashboard = () => {
           </div>
           <div className="mb-6">
             <CatanStats catan={world?.catan} />
+          </div>
+          <div className="mb-6">
+            <HandDebugPanel hands={world?.hand_debug} />
           </div>
           <div className="mb-6">
             <MapLibrary />

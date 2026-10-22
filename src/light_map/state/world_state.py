@@ -20,6 +20,7 @@ from light_map.core.common_types import (
     ViewportState,
 )
 from light_map.core.scene import HandInput
+from light_map.input.hand_debug import build_hand_debug
 from light_map.menu.menu_system import MenuState
 from light_map.state.versioned_atom import VersionedAtom
 from light_map.visibility.visibility_types import VisibilityBlocker
@@ -847,6 +848,7 @@ class WorldState:
             "fps": round(self.fps, 2),
             "tokens_count": len(self.tokens),
             "hands_count": len(self.inputs),
+            "hand_debug": build_hand_debug(self.hands, self.handedness),
             "timestamp": self.last_frame_timestamp,
             "last_hand_timestamp": self.last_hand_timestamp,
             "selection": {

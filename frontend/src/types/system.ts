@@ -132,6 +132,13 @@ export interface CatanBoardGeometry {
   edges?: { id: [number, number][]; x1: number; y1: number; x2: number; y2: number }[];
 }
 
+export interface HandDebug {
+  label: string;
+  gesture: string;
+  fingers: Record<string, boolean>;
+  landmarks: [number, number][];
+}
+
 export type CatanStatsMode = 'simple' | 'resources';
 
 export interface CatanPlayerStats {
@@ -170,6 +177,7 @@ export interface WorldState {
   grid_overlay_visible?: boolean;
   grid_overlay_color?: string;
   catan?: CatanState | null;
+  hand_debug?: HandDebug[];
   [key: string]: unknown;
 }
 
