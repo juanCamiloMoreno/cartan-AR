@@ -419,3 +419,48 @@ def test_fit_board_view_centers_the_board_between_the_panels():
         # inside the screen and clear of the side panels
         assert x >= PANEL_W and x + zoom * BOARD_WIDTH <= width - PANEL_W
         assert y >= 0 and y + zoom * BOARD_HEIGHT <= height
+
+
+# Game banner and turn highlight
+
+
+def test_game_banner_says_what_the_table_waits_for():
+    from light_map.rendering.layers.catan_layer import game_banner
+
+    assert game_banner(None) is None
+    assert game_banner({"phase": "free"}) is None
+    base = {"current_player": "azul"}
+    assert "UNA CASA" in game_banner({**base, "phase": "setup", "setup_step": "settlement"})
+    assert "UN CAMINO" in game_banner({**base, "phase": "setup", "setup_step": "road"})
+    assert "AZUL" in game_banner({**base, "phase": "roll"})
+    assert "TIRA" in game_banner({**base, "phase": "roll"})
+    assert "ROJO 3" in game_banner({**base, "phase": "discard", "discards": {"rojo": 3}})
+    assert "LADRON" in game_banner({**base, "phase": "robber"})
+    assert "BLANCO" in game_banner({**base, "phase": "steal", "victims": ["blanco"]})
+    assert game_banner({**base, "phase": "main"}) == "TURNO DE AZUL"
+    assert game_banner({"phase": "finished", "winner": "rojo"}) == "ROJO GANO!"
+    for phase in ("setup", "roll", "discard", "robber", "steal", "main", "finished"):
+        text = game_banner({**base, "phase": phase, "winner": "x"})
+        assert text.isascii()  # OpenCV fonts cannot draw accents
+
+
+def test_active_player_panel_stands_out_and_a_banner_is_drawn_during_a_game():
+    layer, manager, state = make_layer()
+    free = draw(layer, state)
+
+    manager.new_game(state, 2)
+    game = draw(layer, state)
+    top_center = (slice(0, 120), slice(500, 1400))
+    assert not free[top_center][..., 3].any()
+    assert game[top_center][..., 3].any()  # the banner
+
+    # rojo plays first: its panel has the thick "turn" border, azul's does not
+    rojo = panel_pixels(game, 0)
+    azul = panel_pixels(game, 1)
+    thick = lambda panel: int((panel[:, 14:16, 3] > 0).sum())  # noqa: E731
+    assert thick(rojo) > thick(azul) or not np.array_equal(rojo, azul)
+    manager.game.state.current = 1
+    manager.game.state.phase = "roll"
+    manager.publish(state)
+    after = draw(layer, state)
+    assert not np.array_equal(panel_pixels(after, 0), rojo)

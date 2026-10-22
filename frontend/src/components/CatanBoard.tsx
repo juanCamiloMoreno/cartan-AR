@@ -33,8 +33,15 @@ interface CatanBoardProps {
 
 export const CatanBoard: React.FC<CatanBoardProps> = ({ catan }) => {
   const [player, setPlayer] = useState<string | null>(null);
-  const [mode, setMode] = useState<Mode>('build');
+  const [userMode, setMode] = useState<Mode>('build');
   const [error, setError] = useState<string | null>(null);
+
+  const game = catan?.game && catan.game.phase !== 'free' ? catan.game : null;
+  // During a game the board follows what the rules ask for next.
+  let gameMode: Mode | null = null;
+  if (game?.phase === 'robber') gameMode = 'robber';
+  else if (game?.phase === 'setup') gameMode = game.setup_step === 'road' ? 'road' : 'build';
+  const mode: Mode = gameMode ?? (userMode === 'robber' && game ? 'build' : userMode);
 
   const board = catan?.board;
   if (!catan || !board) {
@@ -46,7 +53,7 @@ export const CatanBoard: React.FC<CatanBoardProps> = ({ catan }) => {
     );
   }
 
-  const activePlayer = player ?? catan.players[0];
+  const activePlayer = game?.current_player ?? player ?? catan.players[0];
   const buildingAt = new Map(catan.buildings.map((b) => [JSON.stringify(b.vertex), b]));
   const producing = new Set(catan.producing.map((t) => `${t.q},${t.r}`));
   const robberTile = board.tiles.find((t) => t.q === catan.robber[0] && t.r === catan.robber[1]);
@@ -98,18 +105,20 @@ export const CatanBoard: React.FC<CatanBoardProps> = ({ catan }) => {
             ['remove', 'Quitar'],
             ['robber', 'Ladrón'],
           ] as [Mode, string][]
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            onClick={() => setMode(value)}
-            aria-pressed={mode === value}
-            className={`px-3 py-1 rounded border text-sm ${
-              mode === value ? 'border-amber-600 bg-amber-50 font-semibold' : 'border-gray-300'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+        )
+          .filter(([value]) => !(game && value === 'remove')) // no removing pieces in a game
+          .map(([value, label]) => (
+            <button
+              key={value}
+              onClick={() => setMode(value)}
+              aria-pressed={mode === value}
+              className={`px-3 py-1 rounded border text-sm ${
+                mode === value ? 'border-amber-600 bg-amber-50 font-semibold' : 'border-gray-300'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
       </div>
       <p className="text-xs text-gray-600">{MODE_HINTS[mode]}</p>
       {error && <p className="text-xs text-red-600">{error}</p>}

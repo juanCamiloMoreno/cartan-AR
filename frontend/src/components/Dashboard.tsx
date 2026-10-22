@@ -7,6 +7,7 @@ import { CalibrationWizard } from './CalibrationWizard';
 import { TokenLibrary } from './TokenLibrary';
 import { SettingsModal } from './SettingsModal';
 import { CatanPanel } from './CatanPanel';
+import { CatanGame } from './CatanGame';
 import { CatanStats } from './CatanStats';
 import { HandDebugPanel } from './HandDebugPanel';
 import { CatanBoard } from './CatanBoard';
@@ -132,6 +133,9 @@ export const Dashboard = () => {
                 <span className="text-gray-500">Tokens:</span> {tokens?.length || 0}
               </p>
             </div>
+          </div>
+          <div className="mb-6">
+            <CatanGame catan={world?.catan} />
           </div>
           <div className="mb-6">
             <CatanPanel catan={world?.catan} />

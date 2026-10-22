@@ -28,12 +28,16 @@ export const CatanPanel: React.FC<CatanPanelProps> = ({ catan }) => {
     }
   };
 
+  const gameActive = !!catan?.game && catan.game.phase !== 'free';
+  const canRoll = !gameActive || catan?.game?.phase === 'roll';
+
   return (
     <div>
       <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Catan</h3>
       <button
+        disabled={!canRoll}
         onClick={() => send()}
-        className="w-full px-3 py-2 text-sm font-bold bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors"
+        className="w-full px-3 py-2 text-sm font-bold bg-amber-500 text-white rounded hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
         Tirar dados
       </button>

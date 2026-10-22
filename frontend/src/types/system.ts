@@ -139,6 +139,18 @@ export interface HandDebug {
   landmarks: [number, number][];
 }
 
+export interface CatanGameState {
+  phase: 'free' | 'setup' | 'roll' | 'discard' | 'robber' | 'steal' | 'main' | 'finished';
+  current_player: string | null;
+  turn: number;
+  setup_step: 'settlement' | 'road';
+  discards: Record<string, number>;
+  victims: string[];
+  winner: string | null;
+  hint: string;
+  costs: Record<string, Record<string, number>>;
+}
+
 export type CatanStatsMode = 'simple' | 'resources';
 
 export interface CatanPlayerStats {
@@ -161,6 +173,7 @@ export interface CatanState {
   players: string[];
   roads?: { edge: [number, number][]; player: string }[];
   stats?: Record<string, CatanPlayerStats>;
+  game?: CatanGameState | null;
   board: CatanBoardGeometry | null;
 }
 

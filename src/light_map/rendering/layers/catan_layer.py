@@ -50,6 +50,32 @@ PIPS = {
 }
 
 
+def game_banner(game: dict | None) -> str | None:
+    """Short ASCII text (OpenCV fonts have no accents) with what the table is waiting for."""
+    if not game or game.get("phase") in (None, "free"):
+        return None
+    phase = game["phase"]
+    who = (game.get("current_player") or "").upper()
+    if phase == "setup":
+        what = "UNA CASA" if game.get("setup_step") == "settlement" else "UN CAMINO"
+        return f"PREPARACION: {who} PONE {what}"
+    if phase == "roll":
+        return f"TURNO DE {who}: TIRA LOS DADOS"
+    if phase == "discard":
+        pending = ", ".join(f"{p.upper()} {n}" for p, n in (game.get("discards") or {}).items())
+        return f"SALIO 7: DESCARTAN {pending}"
+    if phase == "robber":
+        return f"{who} MUEVE AL LADRON"
+    if phase == "steal":
+        victims = ", ".join(v.upper() for v in game.get("victims") or [])
+        return f"{who} ROBA A: {victims}"
+    if phase == "main":
+        return f"TURNO DE {who}"
+    if phase == "finished":
+        return f"{(game.get('winner') or '').upper()} GANO!"
+    return None
+
+
 class CatanLayer(Layer):
     """Highlights the tiles that produce on the last roll and marks the robber."""
 
@@ -92,21 +118,23 @@ class CatanLayer(Layer):
         cv2.putText(img, text, origin, font, scale, (0, 0, 0, 255), 5, cv2.LINE_AA)
         cv2.putText(img, text, origin, font, scale, color, 2, cv2.LINE_AA)
 
-    def _render_panel(self, player: str, stats: dict) -> np.ndarray:
+    def _render_panel(self, player: str, stats: dict, active: bool = False) -> np.ndarray:
         """One player's statistics card. "simple" shows counts, "resources" adds the hand."""
         resources = stats["mode"] == "resources"
         height = PANEL_H if resources else PANEL_SIMPLE_H
         img = np.zeros((height, PANEL_W, 4), dtype=np.uint8)
         color = PLAYER_BGR.get(player, DEFAULT_PLAYER_BGR)
         img[:] = (25, 25, 25, 215)
-        cv2.rectangle(img, (0, 0), (PANEL_W - 1, height - 1), (*color, 255), 6)
+        cv2.rectangle(img, (0, 0), (PANEL_W - 1, height - 1), (*color, 255), 16 if active else 6)
         cv2.rectangle(img, (18, 16), (42, 40), (*color, 255), -1)
         white = (255, 255, 255, 255)
         self._text(img, player.capitalize(), (54, 38), 0.9, white)
         self._text(img, f"PV {stats['points']}", (PANEL_W - 110, 38), 0.9, HIGHLIGHT_BGR + (255,))
         line = f"Casas {stats['settlements']}  Ciud {stats['cities']}  Cam {stats['roads']}"
         self._text(img, line, (18, 82), 0.62, white)
-        self._text(img, f"Cartas {stats['cards']}", (18, 120), 0.7, white)
+        self._text(img, f"Cartas {stats['cards']}", (22 if active else 18, 120), 0.7, white)
+        if active:
+            self._text(img, "TURNO", (PANEL_W - 140, 122), 0.8, HIGHLIGHT_BGR + (255,))
         if resources:
             slot = (PANEL_W - 24) // 5
             for i, (res, label) in enumerate(RESOURCE_SHORT.items()):
@@ -117,13 +145,33 @@ class CatanLayer(Layer):
                 self._text(img, str(stats["hand"][res]), (x0 + 18, 205), 0.9, white)
         return img
 
+    def _draw_banner(self, buffer: np.ndarray, view) -> None:
+        """What the table is waiting for, centered at the top."""
+        text = game_banner(view.game)
+        if not text:
+            return
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        scale, thickness = 1.3, 3
+        (w, h), baseline = cv2.getTextSize(text, font, scale, thickness)
+        x = (self.width - w) // 2
+        y = 20 + h + 14
+        cv2.rectangle(
+            buffer, (x - 24, y - h - 20), (x + w + 24, y + baseline + 14), (20, 20, 20, 225), -1
+        )
+        cv2.rectangle(
+            buffer, (x - 24, y - h - 20), (x + w + 24, y + baseline + 14), (*HIGHLIGHT_BGR, 255), 3
+        )
+        cv2.putText(buffer, text, (x, y), font, scale, (255, 255, 255, 255), thickness, cv2.LINE_AA)
+
     def _draw_panels(self, buffer: np.ndarray, view) -> None:
         """Statistics card in each player's corner; top corners are turned to face that seat."""
         for index, player in enumerate(view.players):
             stats = (view.stats or {}).get(player)
             if stats is None:
                 continue
-            panel = self._render_panel(player, stats)
+            game = view.game or {}
+            active = game.get("current_player") == player
+            panel = self._render_panel(player, stats, active)
             x, y, _, h = panel_rect(index, self.width, self.height)
             if y < self.height / 2:
                 panel = cv2.rotate(panel, cv2.ROTATE_180)
@@ -187,5 +235,6 @@ class CatanLayer(Layer):
             self._draw_dice(buffer, view.dice, view.total)
 
         self._draw_panels(buffer, view)
+        self._draw_banner(buffer, view)
 
         return [ImagePatch(x=0, y=0, width=self.width, height=self.height, data=buffer)]
