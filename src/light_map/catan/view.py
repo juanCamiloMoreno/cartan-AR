@@ -34,7 +34,7 @@ class RoadView:
 
 @dataclass(frozen=True)
 class CatanView:
-    robber: tuple[int, int]
+    robber: tuple[int, int] | None
     dice: tuple[int, int] | None = None
     total: int | None = None
     producing: tuple[ProducingTile, ...] = ()
@@ -55,7 +55,7 @@ class CatanView:
                 {"q": t.q, "r": t.r, "resource": t.resource, "number": t.number}
                 for t in self.producing
             ],
-            "robber": list(self.robber),
+            "robber": list(self.robber) if self.robber else None,
             "payouts": self.payouts or {},
             "buildings": [
                 {"vertex": vertex_to_list(b.vertex), "player": b.player, "kind": b.kind}

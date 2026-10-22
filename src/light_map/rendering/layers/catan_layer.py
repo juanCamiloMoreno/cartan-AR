@@ -6,12 +6,14 @@ import numpy as np
 from light_map.catan.layout import (
     PANEL_H,
     PANEL_W,
+    SIZE,
     edge_endpoints,
     hex_corners,
     panel_rect,
     tile_center,
     vertex_position,
 )
+from light_map.catan.svg import COLORS, DOTS
 from light_map.core.common_types import ImagePatch, Layer
 from light_map.map.map_system import MapSystem
 from light_map.state.world_state import WorldState
@@ -52,12 +54,22 @@ PIPS = {
 }
 
 
+def _hex_to_bgr(color: str) -> tuple[int, int, int]:
+    value = color.lstrip("#")
+    r, g, b = (int(value[i : i + 2], 16) for i in (0, 2, 4))
+    return b, g, r
+
+
 def game_banner(game: dict | None) -> str | None:
     """Short ASCII text (OpenCV fonts have no accents) with what the table is waiting for."""
     if not game or game.get("phase") in (None, "free"):
         return None
     phase = game["phase"]
     who = (game.get("current_player") or "").upper()
+    if phase == "order":
+        return f"QUIEN EMPIEZA: {who} TIRA EL DADO"
+    if phase == "reveal":
+        return f"REVELANDO EL TABLERO {game.get('reveal_done', 0)}/{game.get('reveal_total', 0)}"
     if phase == "setup":
         what = "UNA CASA" if game.get("setup_step") == "settlement" else "UN CAMINO"
         return f"PREPARACION: {who} PONE {what}"
@@ -146,6 +158,42 @@ class CatanLayer(Layer):
                 self._text(img, label, (x0 + 6, 163), 0.5, white)
                 self._text(img, str(stats["hand"][res]), (x0 + 18, 205), 0.9, white)
         return img
+
+    def _draw_revealed_tiles(self, buffer: np.ndarray, view) -> None:
+        """While the board is hidden the map shows empty hexagons: paint what is already out."""
+        if not (view.game or {}).get("hidden"):
+            return
+        tiles = (view.board or {}).get("tiles") or []
+        ox, oy = self.map_system.world_to_screen(0, 0)
+        ux, uy = self.map_system.world_to_screen(100, 0)
+        scale = max(0.3, math.hypot(ux - ox, uy - oy) / 100)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        k = SIZE / 100
+        for tile in tiles:
+            resource = tile["resource"]
+            if resource == "hidden":
+                continue
+            poly = self._to_screen(hex_corners(tile["q"], tile["r"]))
+            color = _hex_to_bgr(COLORS[resource])
+            cv2.fillPoly(buffer, [poly], (*color, 255), lineType=cv2.LINE_AA)
+            cv2.polylines(buffer, [poly], True, (245, 245, 245, 255), 3, cv2.LINE_AA)
+            number = tile["number"]
+            if number is None:
+                continue
+            cx, cy = (int(v) for v in self.map_system.world_to_screen(tile["x"], tile["y"]))
+            radius = int(30 * k * scale)
+            cv2.circle(buffer, (cx, cy), radius, (225, 248, 255, 255), -1, cv2.LINE_AA)
+            cv2.circle(buffer, (cx, cy), radius, (33, 33, 33, 255), 2, cv2.LINE_AA)
+            ink = (40, 40, 198, 255) if number in (6, 8) else (33, 33, 33, 255)
+            text = str(number)
+            size = 28 * k * scale / 25.0
+            (tw, th), _ = cv2.getTextSize(text, font, size, 2)
+            cv2.putText(buffer, text, (cx - tw // 2, cy + th // 3), font, size, ink, 2, cv2.LINE_AA)
+            dots = DOTS[number]
+            start = cx - (dots - 1) * 4 * k * scale
+            for i in range(dots):
+                dot = (int(start + i * 8 * k * scale), int(cy + 17 * k * scale))
+                cv2.circle(buffer, dot, max(2, int(2 * k * scale)), ink, -1, cv2.LINE_AA)
 
     def _draw_ports(self, buffer: np.ndarray, view) -> None:
         """Harbors: two piers from the coast edge to a marker with the trade ratio."""
@@ -243,6 +291,7 @@ class CatanLayer(Layer):
                 buffer, [poly], True, (*HIGHLIGHT_BGR, 255), thickness=6, lineType=cv2.LINE_AA
             )
 
+        self._draw_revealed_tiles(buffer, view)
         self._draw_ports(buffer, view)
 
         for road in view.roads:
@@ -276,9 +325,10 @@ class CatanLayer(Layer):
             if building.kind == "city":
                 cv2.rectangle(buffer, (cx - 5, cy - 5), (cx + 5, cy + 5), (20, 20, 20, 255), -1)
 
-        robber_center = self._to_screen([tile_center(*view.robber)])[0]
-        cv2.circle(buffer, tuple(int(v) for v in robber_center), 16, (*ROBBER_BGR, 255), -1)
-        cv2.circle(buffer, tuple(int(v) for v in robber_center), 16, (255, 255, 255, 255), 2)
+        if view.robber is not None:
+            robber_center = self._to_screen([tile_center(*view.robber)])[0]
+            cv2.circle(buffer, tuple(int(v) for v in robber_center), 16, (*ROBBER_BGR, 255), -1)
+            cv2.circle(buffer, tuple(int(v) for v in robber_center), 16, (255, 255, 255, 255), 2)
 
         if view.dice is not None and view.total is not None:
             self._draw_dice(buffer, view.dice, view.total)

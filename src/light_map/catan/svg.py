@@ -57,3 +57,22 @@ def build_svg(tiles: dict[Coord, Tile]) -> str:
             )
     parts.append("</svg>")
     return "\n".join(parts)
+
+
+BLANK_TILE = "#cfd8dc"
+
+
+def build_blank_svg(tiles: dict[Coord, Tile]) -> str:
+    """The empty board: only the hexagon spaces, used while the tiles are still hidden."""
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{BOARD_WIDTH:.0f}" '
+        f'height="{BOARD_HEIGHT:.0f}" viewBox="0 0 {BOARD_WIDTH:.0f} {BOARD_HEIGHT:.0f}">',
+        '<rect width="100%" height="100%" fill="#1e88e5"/>',
+    ]
+    for q, r in tiles:
+        points = " ".join(f"{x:.1f},{y:.1f}" for x, y in hex_corners(q, r))
+        parts.append(
+            f'<polygon points="{points}" fill="{BLANK_TILE}" stroke="#f5f5f5" stroke-width="3"/>'
+        )
+    parts.append("</svg>")
+    return "\n".join(parts)

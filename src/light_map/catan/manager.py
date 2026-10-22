@@ -30,7 +30,7 @@ from light_map.catan.layout import (
     tile_center,
     vertex_position,
 )
-from light_map.catan.svg import build_svg
+from light_map.catan.svg import build_blank_svg, build_svg
 from light_map.catan.view import BuildingView, CatanView, ProducingTile, RoadView
 from light_map.state.world_state import WorldState
 
@@ -43,6 +43,8 @@ class CatanManager:
         self._loaded_from: str | None = None
         self._sidecar: str | None = None
         self.report: GenerationReport | None = None
+        self.map_dirty = False  # the SVG changed: the app has to reload the map
+        self._svg_blank = False
 
     # Loading and saving
 
@@ -104,20 +106,29 @@ class CatanManager:
             "winner": state.winner,
             "hint": game.hint(),
             "costs": COSTS,
+            "phased": state.phased,
+            "hidden": state.hidden,
+            "order": list(state.order),
+            "order_rolls": dict(state.order_rolls),
+            "order_pending": game.order_pending(),
+            "reveal_done": game.reveal_total()[0],
+            "reveal_total": game.reveal_total()[1],
         }
 
     # Publishing
 
     def _geometry(self) -> dict:
         tiles = []
-        for (q, r), tile in self.board.tiles.items():
+        game = self.game
+        for q, r in self.board.tiles:
             x, y = tile_center(q, r)
+            resource, number = game.visible((q, r))
             tiles.append(
                 {
                     "q": q,
                     "r": r,
-                    "resource": tile.resource,
-                    "number": tile.number,
+                    "resource": resource or "hidden",
+                    "number": number,
                     "x": x,
                     "y": y,
                     "corners": [list(c) for c in hex_corners(q, r)],
@@ -173,8 +184,9 @@ class CatanManager:
                 if tile.number == total and (q, r) != board.robber
             )
             payouts = {p: dict(g) for p, g in board.production(total).items()}
+        hidden = game.state.hidden
         view = CatanView(
-            robber=board.robber,
+            robber=None if game.visible(board.robber)[0] is None else board.robber,
             dice=dice,
             total=total,
             producing=producing,
@@ -186,7 +198,7 @@ class CatanManager:
             board=self._geometry(),
             players=tuple(board.players),
             game=self._game_view(game),
-            generator=self.report.to_dict() if self.report else None,
+            generator=self.report.to_dict() if self.report and not hidden else None,
             roads=tuple(RoadView(e, player) for e, player in board.roads.items()),
             stats={p: board.player_stats(p) for p in board.players},
         )
@@ -274,15 +286,57 @@ class CatanManager:
 
     # Turn-based game
 
-    def new_game(self, state: WorldState, players: int) -> None:
-        """Clears the board and starts a game with the turn rules (setup phase first)."""
-        self.game.new_game(int(players))
+    def _write_svg(self, blank: bool) -> None:
+        """Rewrites the map file (empty hexagons or the full board) and asks for a reload."""
+        if not self._loaded_from or self.board is None:
+            return
+        svg = build_blank_svg(self.board.tiles) if blank else build_svg(self.board.tiles)
+        try:
+            with open(self._loaded_from, "w", encoding="utf-8") as f:
+                f.write(svg)
+        except OSError as exc:
+            logging.error("CatanManager: could not write %s: %s", self._loaded_from, exc)
+            return
+        self._svg_blank = blank
+        self.map_dirty = True
+
+    def new_game(self, state: WorldState, players: int, phased: bool = False) -> None:
+        """Clears the board and starts a game with the turn rules.
+
+        A phased game also blanks the map: the tiles come out during the reveal.
+        """
+        self.game.new_game(int(players), bool(phased))
         self.last_dice = None
+        if phased:
+            self._write_svg(blank=True)
+        elif self._svg_blank:
+            self._write_svg(blank=False)
         self._save()
         self.publish(state)
 
+    def order_roll(self, state: WorldState, player: str, value: int | None = None) -> None:
+        self.game.order_roll(player, None if value in (None, "") else int(value))
+        self._save()
+        self.publish(state)
+
+    def _after_reveal(self, state: WorldState) -> None:
+        if self.board.game.phase != "reveal" and self._svg_blank:
+            self._write_svg(blank=False)  # everything is out: the map shows the whole board
+        self._save()
+        self.publish(state)
+
+    def reveal_next(self, state: WorldState) -> None:
+        self.game.reveal_next()
+        self._after_reveal(state)
+
+    def reveal_all(self, state: WorldState) -> None:
+        self.game.reveal_all()
+        self._after_reveal(state)
+
     def free_play(self, state: WorldState) -> None:
         self.game.free_play()
+        if self._svg_blank:
+            self._write_svg(blank=False)
         self._save()
         self.publish(state)
 
@@ -314,11 +368,6 @@ class CatanManager:
         self.board = board
         self.report = report
         self.last_dice = None
-        if self._loaded_from:
-            try:
-                with open(self._loaded_from, "w", encoding="utf-8") as f:
-                    f.write(build_svg(board.tiles))
-            except OSError as exc:
-                logging.error("CatanManager: could not write %s: %s", self._loaded_from, exc)
+        self._write_svg(blank=False)
         self._save()
         self.publish(state)

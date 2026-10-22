@@ -94,6 +94,9 @@ class ActionDispatcher:
         self.register("CATAN_STEAL", handle_catan_steal)
         self.register("CATAN_BANK", handle_catan_bank)
         self.register("CATAN_NEW_BOARD", handle_catan_new_board)
+        self.register("CATAN_ORDER_ROLL", handle_catan_order_roll)
+        self.register("CATAN_REVEAL_NEXT", handle_catan_reveal_next)
+        self.register("CATAN_REVEAL_ALL", handle_catan_reveal_all)
         self.register("TOGGLE_EXCLUSIVE_VISION", handle_toggle_exclusive_vision)
 
     def _handle_menu_transition(self, action_name: str) -> Optional["SceneTransition"]:
@@ -487,7 +490,15 @@ def _run_catan(app: "InteractiveApp", payload: dict[str, Any], state, method: st
     except (ValueError, KeyError, TypeError) as exc:
         logging.warning("%s rejected: %s", method, exc)
         app.notifications.add_notification(f"Catan: {exc}")
+    _reload_map_if_needed(app, manager)
     return None
+
+
+def _reload_map_if_needed(app: "InteractiveApp", manager) -> None:
+    """The map file is rewritten when a phased game starts and when its reveal ends."""
+    if manager.map_dirty:
+        manager.map_dirty = False
+        app.load_map(app.current_map_path)
 
 
 def handle_catan_roll(
@@ -568,8 +579,21 @@ def handle_catan_stats_mode(
 def handle_catan_new_game(
     app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
 ) -> Optional["SceneTransition"]:
-    """Starts a game with turns and costs. Payload: {"players": 3}."""
-    return _run_catan(app, payload, state, "new_game", "players")
+    """Starts a game with turns and costs. Payload: {"players": 3, "phased": true}.
+
+    A phased game hides the board: order rolls, setup on the empty board, then the reveal.
+    """
+    manager = _catan_manager(app, state)
+    if manager is None:
+        return None
+    try:
+        data = _catan_payload(payload)
+        manager.new_game(state, data["players"], bool(data.get("phased", False)))
+    except (ValueError, KeyError, TypeError) as exc:
+        logging.warning("new_game rejected: %s", exc)
+        app.notifications.add_notification(f"Catan: {exc}")
+    _reload_map_if_needed(app, manager)
+    return None
 
 
 def handle_catan_free_play(
@@ -621,8 +645,39 @@ def handle_catan_new_board(
         logging.warning("new_board rejected: %s", exc)
         app.notifications.add_notification(f"Catan: {exc}")
         return None
-    app.load_map(app.current_map_path)  # redraw the map with the new tiles
+    _reload_map_if_needed(app, manager)  # redraw the map with the new tiles
     return None
+
+
+def handle_catan_order_roll(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """A player rolls for the first turn. Payload: {"player": "azul", "value": 4}; without a
+    value the app rolls the die."""
+    manager = _catan_manager(app, state)
+    if manager is None:
+        return None
+    try:
+        data = _catan_payload(payload)
+        manager.order_roll(state, data["player"], data.get("value"))
+    except (ValueError, KeyError, TypeError) as exc:
+        logging.warning("order_roll rejected: %s", exc)
+        app.notifications.add_notification(f"Catan: {exc}")
+    return None
+
+
+def handle_catan_reveal_next(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Reveals the next tile, then the next number token."""
+    return _run_catan(app, payload, state, "reveal_next")
+
+
+def handle_catan_reveal_all(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Reveals everything that is still hidden."""
+    return _run_catan(app, payload, state, "reveal_all")
 
 
 def _remove_ping(state: "WorldState", token_id: str):
