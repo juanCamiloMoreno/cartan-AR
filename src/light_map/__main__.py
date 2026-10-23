@@ -24,6 +24,7 @@ from light_map.core.display_utils import (
 from light_map.core.main_loop import MainLoopController
 from light_map.core.storage import StorageManager
 from light_map.input.input_manager import InputManager
+from light_map.input.mouse_hands import MOUSE_HANDS_ENV, MouseHands
 from light_map.interactive_app import AppConfig, InteractiveApp
 from light_map.map.map_config import MapConfigManager
 from light_map.rendering.projector import ProjectorDistortionModel
@@ -278,6 +279,12 @@ def run_app(args):
             Camera(index=args.camera) as cam,
             ProjectorWindow(window_name, native_screen_width, native_screen_height) as app_win,
         ):
+            mouse_hands = None
+            if os.environ.get(MOUSE_HANDS_ENV):
+                mouse_hands = MouseHands(native_screen_width, native_screen_height)
+                cv2.setMouseCallback(window_name, mouse_hands.on_mouse)
+                logger.info("Mouse hands: right click on the projection to pick a gesture")
+
             # --- Resolution Mismatch Check ---
             current_camera_width, current_camera_height = cam.width, cam.height
             calibrated_width, calibrated_height = app.config.projector_matrix_resolution
@@ -551,6 +558,8 @@ def run_app(args):
 
                         # B. Process and Render
                         main_loop.debug_mode = app.debug_mode
+                        if mouse_hands is not None:
+                            mouse_hands.inject(state, app.time_provider())
                         output_image, scene_actions = app.process_state(state, actions)
 
                         if output_image is not None:
@@ -570,6 +579,8 @@ def run_app(args):
                                 )
 
                             # C. Update Hardware Output
+                            if mouse_hands is not None:
+                                mouse_hands.draw(output_image)
                             app_win.update_image(output_image)
 
                         # D. Update State Mirror for Remote Driver (AFTER process_state)

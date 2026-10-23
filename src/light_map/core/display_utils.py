@@ -74,7 +74,7 @@ class ProjectorWindow:
         cv2.namedWindow(self.name, cv2.WINDOW_NORMAL)
         if os.environ.get(WINDOWED_ENV):
             # Development without a projector: a small ordinary window instead of fullscreen.
-            cv2.resizeWindow(self.name, 640, 360)
+            cv2.resizeWindow(self.name, 1280, 720)
             cv2.waitKey(1)
             return
         rect = screen_rect()

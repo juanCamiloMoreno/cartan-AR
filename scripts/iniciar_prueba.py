@@ -36,6 +36,7 @@ def build_launch(
     windowed: bool = False,
     mock_camera: bool = False,
     guided: bool = True,
+    simulate: bool = False,
 ) -> tuple[list[str], dict[str, str], list[str]]:
     """El comando, el entorno extra y los avisos para arrancar la app."""
     warnings: list[str] = []
@@ -51,6 +52,8 @@ def build_launch(
         env["LIGHT_MAP_WINDOWED"] = "1"
     if mock_camera:
         env["MOCK_CAMERA"] = "1"
+    if simulate:  # no projector or camera: the mouse is the hand
+        env.update(MOCK_CAMERA="1", LIGHT_MAP_WINDOWED="1", LIGHT_MAP_MOUSE_HANDS="1")
     if guided:
         env["LIGHT_MAP_CATAN_WIZARD"] = "1"  # the projection opens the guided start
     command = [
@@ -127,6 +130,9 @@ def main() -> int:
     parser.add_argument("--windowed", action="store_true", help="proyección en ventana pequeña")
     parser.add_argument("--skip-camera-check", action="store_true")
     parser.add_argument("--no-guide", action="store_true", help="sin el modo guiado al arrancar")
+    parser.add_argument(
+        "--simulate", action="store_true", help="sin proyector ni camara: el mouse es la mano"
+    )
     parser.add_argument("--mock-camera", action="store_true", help="sin cámara real (pruebas)")
     args = parser.parse_args()
 
@@ -145,7 +151,7 @@ def main() -> int:
         print("\nArréglalo y vuelve a intentar.")
         return 1
 
-    if not (args.skip_camera_check or args.mock_camera):
+    if not (args.skip_camera_check or args.mock_camera or args.simulate):
         print(f"Probando la cámara {args.camera}...")
         issue = camera_report(args.camera)
         if issue:
@@ -159,9 +165,10 @@ def main() -> int:
         args.confidence,
         args.map,
         monitors,
-        args.windowed,
+        args.windowed or args.simulate,
         args.mock_camera,
         not args.no_guide,
+        args.simulate,
     )
     for warning in warnings:
         print("!", warning)

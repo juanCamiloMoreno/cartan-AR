@@ -140,6 +140,11 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   6. **A jugar:** la esquina de quien tiene el turno se pinta con un cuarto de círculo grande con
      "JUEGA ROJO" y un botón **PASAR TURNO** (puño 5 s). Al empezar cada turno aparece en el centro
      "TURNO DE AZUL — ROCK PARA TIRAR LOS DADOS". Construir se hace señalando + paz (ver arriba).
+- **Jugar en el computador con el mouse (sin proyector ni cámara):** `simular_catan.bat` abre la
+  proyección en una ventana y el mouse hace de mano. **Clic derecho** abre el menú de gestos
+  (señalar, puño, roca, paz, palma, pistola, sin mano); el clic izquierdo elige y el **clic central**
+  pasa al siguiente gesto. La mano sigue al cursor y pasa por el mismo código que una mano real:
+  anillos, tiempos de sostener, botones del modo guiado, apuntar y construir.
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.
