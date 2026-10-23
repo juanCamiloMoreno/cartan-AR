@@ -93,6 +93,14 @@ describe('CatanGame', () => {
     expect(screen.queryByRole('button', { name: 'Terminar turno' })).toBeNull();
   });
 
+  it('opens the guided start on the projection', async () => {
+    render(<CatanGame catan={catan(game({ phase: 'free', turn: 0, hint: 'Modo libre' }))} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Modo guiado' }));
+    await waitFor(() =>
+      expect(api.injectAction).toHaveBeenCalledWith('CATAN_WIZARD_START', undefined)
+    );
+  });
+
   it('can leave the game for the free mode', async () => {
     render(<CatanGame catan={catan(game())} />);
     fireEvent.click(screen.getByRole('button', { name: 'Modo libre' }));

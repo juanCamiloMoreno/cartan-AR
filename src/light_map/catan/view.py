@@ -47,6 +47,8 @@ class CatanView:
     game: dict[str, Any] | None = None
     generator: dict[str, Any] | None = None
     notice: dict[str, Any] | None = None
+    wizard: dict[str, Any] | None = None  # the guided start (players and board rules screens)
+    corners: tuple[str | None, ...] = (None, None, None, None)  # who sits in each corner
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -68,5 +70,7 @@ class CatanView:
             "game": self.game,
             "generator": self.generator,
             "notice": self.notice,
+            "wizard": self.wizard,
+            "corners": list(self.corners),
             "board": self.board,
         }

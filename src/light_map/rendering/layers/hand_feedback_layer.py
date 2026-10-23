@@ -16,6 +16,7 @@ from light_map.catan.layout import (
     panel_at,
     panel_rect,
 )
+from light_map.catan.screens import button_under
 from light_map.catan.view import CatanView
 from light_map.core.common_types import GestureType, ImagePatch, Layer
 from light_map.state.world_state import WorldState
@@ -64,6 +65,11 @@ class HandFeedbackLayer(Layer):
         """(what the hold triggers, the target) for a hand that holds an action gesture."""
         if hand.gesture == config_vars.CATAN_ROLL_GESTURE:
             return "dados", None
+        view = self.state.catan if self.state is not None else None
+        if isinstance(view, CatanView):
+            button = button_under(view, hand, self.width, self.height)
+            if button is not None:
+                return "boton", button
         if hand.gesture == BUILD_GESTURE:
             if self._aimed is None:
                 return None
@@ -103,10 +109,14 @@ class HandFeedbackLayer(Layer):
             del self._hold_started[old]
         if key is None:
             return None
-        needed = {
-            "dados": config_vars.CATAN_ROLL_HOLD_TIME,
-            "construir": config_vars.CATAN_BUILD_HOLD_TIME,
-        }.get(found[0], config_vars.CATAN_STATS_HOLD_TIME)
+        needed = (
+            found[1].hold
+            if found[0] == "boton"
+            else {
+                "dados": config_vars.CATAN_ROLL_HOLD_TIME,
+                "construir": config_vars.CATAN_BUILD_HOLD_TIME,
+            }.get(found[0], config_vars.CATAN_STATS_HOLD_TIME)
+        )
         started = self._hold_started.setdefault(key, current_time)
         return found[0], needed, current_time - started, found[1]
 
@@ -163,6 +173,27 @@ class HandFeedbackLayer(Layer):
             cv2.fillPoly(patch, [local], (*color, 90), lineType=cv2.LINE_AA)
             cv2.polylines(patch, [local], True, (*color, 255), 10, cv2.LINE_AA)
             return ImagePatch(x=x0, y=y0, width=x1 - x0, height=y1 - y0, data=patch)
+        if what == "boton":
+            x, y, w, h = target.x, target.y, target.w, target.h
+            patch = np.zeros((h, w, 4), dtype=np.uint8)
+            fill = int(w * progress)
+            if target.shape == "circle":
+                cv2.circle(patch, (w // 2, h // 2), w // 2 - 4, (*color, 255), 14, cv2.LINE_AA)
+                cv2.ellipse(
+                    patch,
+                    (w // 2, h // 2),
+                    (w // 2 - 22, h // 2 - 22),
+                    -90,
+                    0,
+                    360 * progress,
+                    (255, 255, 255, 255),
+                    14,
+                    cv2.LINE_AA,
+                )
+            else:
+                cv2.rectangle(patch, (0, 0), (w - 1, h - 1), (*color, 255), 14)
+                cv2.rectangle(patch, (0, h - 22), (fill, h - 1), (*color, 255), -1)
+            return ImagePatch(x=x, y=y, width=w, height=h, data=patch)
         if what in ("robar", "panel", "aceptar"):
             view = self.state.catan
             index = list(view.players).index(target)

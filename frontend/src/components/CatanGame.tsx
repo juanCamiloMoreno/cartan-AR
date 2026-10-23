@@ -125,6 +125,12 @@ export const CatanGame: React.FC<CatanGameProps> = ({ catan }) => {
             {players}
           </button>
         ))}
+        <button
+          onClick={() => send('CATAN_WIZARD_START')}
+          className="px-2 py-0.5 border rounded bg-amber-50 hover:bg-amber-100"
+        >
+          Modo guiado
+        </button>
         {inGame && (
           <button
             onClick={() => send('CATAN_FREE_PLAY')}

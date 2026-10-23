@@ -9,6 +9,7 @@ import numpy as np
 import light_map.menu.menu_config as config_vars
 from light_map.catan.aim import BuildAim, build_action, confirming
 from light_map.catan.layout import cell_at_world, panel_at
+from light_map.catan.screens import button_under, screen_kind
 from light_map.catan.view import CatanView
 from light_map.core.common_types import (
     Action,
@@ -250,6 +251,7 @@ class ViewingScene(BaseMapScene):
         super().__init__(context)
         self._stats_target: tuple[str, object] | None = None
         self._build_aim = BuildAim()
+        self._button: str | None = None
 
     def on_enter(self, payload: dict | None = None) -> None:
         self.dwell_tracker.reset()
@@ -284,6 +286,14 @@ class ViewingScene(BaseMapScene):
         if Action.CATAN_BUILD_REQUEST in actions:
             self._queue_catan_build()
 
+        if Action.CATAN_BUTTON_REQUEST in actions:
+            self._queue_catan_button()
+
+        if Action.CATAN_REVEAL_REQUEST in actions:
+            state = getattr(self.context, "state", None)
+            if state is not None:
+                state.pending_actions.append({"action": "CATAN_REVEAL_NEXT"})
+
         dt = current_time - self.last_update_time if self.last_update_time > 0 else 0.033
         self.last_update_time = current_time
 
@@ -291,6 +301,8 @@ class ViewingScene(BaseMapScene):
             self.context.events.cancel(TimerKey.CATAN_ROLL_HOLD)
             self.context.events.cancel(TimerKey.CATAN_STATS_HOLD)
             self.context.events.cancel(TimerKey.CATAN_BUILD_HOLD)
+            self.context.events.cancel(TimerKey.CATAN_BUTTON_HOLD)
+            self._button = None
             self.summon_gesture_start_time = 0.0
             self._update_dwell_and_linger(GestureType.NONE, None, dt, current_time)
             return None
@@ -317,6 +329,7 @@ class ViewingScene(BaseMapScene):
         self._update_catan_roll_gesture(primary_gesture)
         self._update_catan_stats_gesture(inputs)
         self._update_catan_build_gesture(inputs, current_time)
+        self._update_catan_buttons(inputs)
 
         # Multi-step menu summoning (Step 1: VICTORY for 2s, Step 2: SHAKA for 2s)
         is_step1_ready = self.context.events.has_event(TimerKey.SUMMON_MENU)
@@ -374,6 +387,8 @@ class ViewingScene(BaseMapScene):
             return None
         config = self.context.app_config
         phase = (view.game or {}).get("phase")
+        if screen_kind(view):
+            return None
         for hand in inputs:
             if hand.gesture != config_vars.CATAN_STATS_GESTURE:
                 continue
@@ -415,6 +430,52 @@ class ViewingScene(BaseMapScene):
             config_vars.CATAN_STATS_HOLD_TIME,
             lambda: Action.CATAN_STATS_REQUEST,
             key=TimerKey.CATAN_STATS_HOLD,
+        )
+
+    def _catan_view(self) -> CatanView | None:
+        view = getattr(getattr(self.context, "state", None), "catan", None)
+        return view if isinstance(view, CatanView) else None
+
+    def _update_catan_buttons(self, inputs: list[HandInput]) -> None:
+        """Holding a gesture on a button of the guided screens presses it."""
+        events = self.context.events
+        view = self._catan_view()
+        if view is not None and (view.game or {}).get("phase") == "reveal":
+            # the guided reveal runs by itself, tile after tile
+            if not events.has_event(TimerKey.CATAN_REVEAL_TICK):
+                events.schedule(
+                    config_vars.CATAN_REVEAL_STEP,
+                    lambda: Action.CATAN_REVEAL_REQUEST,
+                    key=TimerKey.CATAN_REVEAL_TICK,
+                )
+        found = None
+        if view is not None:
+            config = self.context.app_config
+            for hand in inputs:
+                found = button_under(view, hand, config.width, config.height)
+                if found is not None:
+                    break
+        button_id = found.id if found else None
+        if button_id != self._button:
+            events.cancel(TimerKey.CATAN_BUTTON_HOLD)
+        self._button = button_id
+        if found is None or events.has_event(TimerKey.CATAN_BUTTON_HOLD):
+            return
+        if events.has_event(TimerKey.CATAN_BUTTON_COOLDOWN):
+            return
+        events.schedule(
+            found.hold, lambda: Action.CATAN_BUTTON_REQUEST, key=TimerKey.CATAN_BUTTON_HOLD
+        )
+
+    def _queue_catan_button(self) -> None:
+        """Asks the app to press the held button; the manager decides what it does."""
+        state = getattr(self.context, "state", None)
+        if state is not None and self._button:
+            payload = json.dumps({"button": self._button})
+            state.pending_actions.append({"action": "CATAN_UI", "payload": payload})
+        self._button = None
+        self.context.events.schedule(
+            config_vars.CATAN_BUTTON_COOLDOWN, lambda: None, key=TimerKey.CATAN_BUTTON_COOLDOWN
         )
 
     def _update_catan_build_gesture(self, inputs: list[HandInput], now: float) -> None:

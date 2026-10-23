@@ -82,6 +82,13 @@ _PATTERNS: list[tuple[str, str]] = [
     (r"This offer is for (\w+)", "Esta oferta es para {1}"),
     (r"You cannot trade with yourself", "No puedes comerciar contigo mismo"),
     (r"It is (\w+)'s offer", "La oferta es de {1}"),
+    (r"(\w+) already has a corner", "{1} ya tiene esquina"),
+    (r"The table has four corners", "La mesa tiene cuatro esquinas"),
+    (r"That corner is taken", "Esa esquina ya está ocupada por otro jugador"),
+    (r"Choose the map or the houses", "Elige armar el mapa o poner las casas"),
+    (r"Choose how many play", "Elige cuántos juegan"),
+    (r"That button does nothing now", "Ese botón no hace nada ahora"),
+    (r"There is nothing to press now", "No hay nada que pulsar ahora"),
 ]
 _COMPILED = [(re.compile(f"^{pattern}$"), text) for pattern, text in _PATTERNS]
 

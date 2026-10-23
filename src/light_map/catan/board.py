@@ -150,6 +150,7 @@ class Board:
         self.buildings: dict[Vertex, tuple[str, Building]] = {}
         self.roads: dict[Edge, str] = {}
         self.players: list[str] = list(PLAYER_NAMES)
+        self.seats: dict[str, int] = {}  # corner of the table of each player (default: by order)
         self.hands: dict[str, Counter] = {}
         self.stats_modes: dict[str, str] = {}
         self.dev = DevCards()
@@ -195,6 +196,7 @@ class Board:
                 {"edge": edge_to_list(e), "player": player} for e, player in self.roads.items()
             ],
             "players": list(self.players),
+            "seats": dict(self.seats),
             "hands": {p: {r: n for r, n in h.items() if n} for p, h in self.hands.items()},
             "stats_modes": dict(self.stats_modes),
             "ports": [{"edge": edge_to_list(e), "kind": k} for e, k in self.ports.items()],
@@ -215,6 +217,7 @@ class Board:
         for item in data.get("roads", []):
             board.roads[edge_from_list(item["edge"])] = item["player"]
         board.players = list(data.get("players", PLAYER_NAMES))
+        board.seats = {p: int(c) for p, c in data.get("seats", {}).items()}
         for player, hand in data.get("hands", {}).items():
             board.hands[player] = Counter({r: int(n) for r, n in hand.items() if int(n) > 0})
         board.stats_modes = {
@@ -331,6 +334,15 @@ class Board:
             if player not in keep and self.has_pieces(player):
                 raise ValueError(f"{player} still has pieces on the board or cards in hand")
         self.players = keep
+
+    def corners(self) -> list[str | None]:
+        """Who sits in each of the four corners of the table (None: nobody)."""
+        corners: list[str | None] = [None] * 4
+        for index, player in enumerate(self.players):
+            if self.game.phase == "seats" and player not in self.seats:
+                continue  # still choosing: its corner is not decided yet
+            corners[self.seats.get(player, index) % 4] = player
+        return corners
 
     def has_pieces(self, player: str) -> bool:
         return (

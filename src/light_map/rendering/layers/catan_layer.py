@@ -13,7 +13,9 @@ from light_map.catan.layout import (
     tile_center,
     vertex_position,
 )
+from light_map.catan.screens import buttons, screen_kind
 from light_map.catan.svg import COLORS, DOTS
+from light_map.catan.wizard import BALANCE_LABELS
 from light_map.core.common_types import ImagePatch, Layer
 from light_map.map.map_system import MapSystem
 from light_map.state.world_state import WorldState
@@ -294,7 +296,9 @@ class CatanLayer(Layer):
 
     def _draw_panels(self, buffer: np.ndarray, view) -> None:
         """Statistics card in each player's corner; top corners are turned to face that seat."""
-        for index, player in enumerate(view.players):
+        for index, player in enumerate(view.corners):
+            if player is None:
+                continue
             stats = (view.stats or {}).get(player)
             if stats is None:
                 continue
@@ -309,12 +313,199 @@ class CatanLayer(Layer):
             ph, pw = panel.shape[:2]
             buffer[y : y + ph, x : x + pw] = panel
 
+    # Guided screens: big, simple and obvious
+
+    @staticmethod
+    def _big_text(img, text, center, scale, color=(255, 255, 255, 255), thickness=4) -> None:
+        """Text centered on a point with a dark outline (ASCII only)."""
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        (w, h), _ = cv2.getTextSize(text, font, scale, thickness)
+        origin = (int(center[0] - w / 2), int(center[1] + h / 2))
+        cv2.putText(img, text, origin, font, scale, (0, 0, 0, 255), thickness + 6, cv2.LINE_AA)
+        cv2.putText(img, text, origin, font, scale, color, thickness, cv2.LINE_AA)
+
+    def _draw_button(self, buffer, button, fill, text_color=(255, 255, 255, 255)) -> None:
+        x, y, w, h = button.x, button.y, button.w, button.h
+        if button.shape == "circle":
+            center = (x + w // 2, y + h // 2)
+            cv2.circle(buffer, center, w // 2, (*fill, 255), -1, cv2.LINE_AA)
+            cv2.circle(buffer, center, w // 2, (255, 255, 255, 255), 8, cv2.LINE_AA)
+            return
+        cv2.rectangle(buffer, (x, y), (x + w, y + h), (*fill, 255), -1)
+        cv2.rectangle(buffer, (x, y), (x + w, y + h), (255, 255, 255, 255), 6)
+
+    def _draw_screen(self, buffer, view, kind: str) -> None:
+        """A full-screen guide that replaces the board: players, rules, order, seats or mode."""
+        w, h = self.width, self.height
+        buffer[:] = (24, 18, 18, 255)
+        big = self._big_text
+        game = view.game or {}
+        gold = HIGHLIGHT_BGR + (255,)
+        if kind == "players":
+            big(buffer, "CUANTOS JUGADORES?", (w // 2, 150), 2.6, gold, 6)
+            for button in buttons(view, w, h):
+                self._draw_button(buffer, button, (70, 50, 40))
+                center = (button.x + button.w // 2, button.y + button.h // 2)
+                big(buffer, button.label, center, 9.0, (255, 255, 255, 255), 14)
+            big(buffer, "SENALA UN NUMERO CON EL DEDO 1 SEGUNDO", (w // 2, h - 120), 1.6)
+        elif kind == "rules":
+            big(buffer, "REGLAS DEL TABLERO", (w // 2, 100), 2.4, gold, 6)
+            rules = view.wizard["rules"]
+            for button in buttons(view, w, h):
+                if button.id in ("ok", "back"):
+                    fill = (70, 160, 70) if button.id == "ok" else (90, 90, 90)
+                    self._draw_button(buffer, button, fill)
+                    center = (button.x + button.w // 2, button.y + button.h // 2)
+                    big(buffer, button.label, center, 2.4, (255, 255, 255, 255), 6)
+                    continue
+                self._draw_button(buffer, button, (60, 48, 42))
+                cy = button.y + button.h // 2
+                big(buffer, button.label, (button.x + 40 + len(button.label) * 17, cy), 1.5)
+                if button.id == "balance":
+                    value = BALANCE_LABELS.get(rules["balance"], rules["balance"])
+                    pill, text = (170, 110, 40), value
+                else:
+                    pill, text = ((70, 160, 70), "SI") if button.on else ((60, 60, 200), "NO")
+                px = button.x + button.w - 150
+                cv2.rectangle(buffer, (px - 60, cy - 32), (px + 90, cy + 32), (*pill, 255), -1)
+                big(buffer, text, (px + 15, cy), 1.3, (255, 255, 255, 255), 4)
+            big(buffer, "SENALA 1 SEGUNDO PARA CAMBIAR", (w // 2, h - 190), 1.2)
+        elif kind == "order":
+            who = (game.get("current_player") or "").upper()
+            color = PLAYER_BGR.get(game.get("current_player"), DEFAULT_PLAYER_BGR)
+            big(buffer, "QUIEN EMPIEZA?", (w // 2, 130), 2.6, gold, 6)
+            big(buffer, "TURNO", (w // 2, 330), 5.0, (255, 255, 255, 255), 10)
+            big(buffer, who, (w // 2, 540), 8.0, (*color, 255), 16)
+            big(buffer, "PON LA MANO EN ROCK PARA TIRAR EL DADO", (w // 2, 760), 1.7)
+            rolled = game.get("order_rolls") or {}
+            for i, (player, value) in enumerate(rolled.items()):
+                tone = PLAYER_BGR.get(player, DEFAULT_PLAYER_BGR)
+                big(buffer, f"{player.upper()}: {value}", (w // 2, 860 + i * 70), 1.7, (*tone, 255))
+        elif kind == "seats":
+            who = (game.get("current_player") or "").upper()
+            color = PLAYER_BGR.get(game.get("current_player"), DEFAULT_PLAYER_BGR)
+            big(buffer, "ELIGE TU ESQUINA", (w // 2, 150), 2.6, gold, 6)
+            big(buffer, who, (w // 2, 430), 6.0, (*color, 255), 12)
+            big(buffer, "LLEVA EL PUNO A TU ESQUINA 3 SEGUNDOS", (w // 2, 640), 1.6)
+            for corner, player in enumerate(view.corners):
+                if not player:
+                    continue
+                x, y, pw, ph = panel_rect(corner, w, h)
+                center = (x + pw // 2, y + ph // 2)
+                tone = PLAYER_BGR.get(player, DEFAULT_PLAYER_BGR)
+                cv2.circle(buffer, center, 130, (*tone, 255), -1, cv2.LINE_AA)
+                cv2.circle(buffer, center, 130, (255, 255, 255, 255), 8, cv2.LINE_AA)
+                big(buffer, player.upper(), center, 1.6, (20, 20, 20, 255), 4)
+            for button in buttons(view, w, h):
+                self._draw_button(buffer, button, (70, 50, 40))
+                center = (button.x + button.w // 2, button.y + button.h // 2)
+                big(buffer, "AQUI", (center[0], center[1] - 20), 1.8)
+                big(buffer, "PUNO 3 S", (center[0], center[1] + 40), 1.2)
+        elif kind == "mode":
+            big(buffer, "QUE VA PRIMERO?", (w // 2, 150), 2.6, gold, 6)
+            notes = {
+                "map": ("SE REVELA EL MAPA", "Y LUEGO SE PONEN LAS CASAS"),
+                "houses": ("SE PONEN LAS CASAS", "Y LUEGO SE REVELA EL MAPA"),
+            }
+            for button in buttons(view, w, h):
+                self._draw_button(buffer, button, (70, 50, 40))
+                cx = button.x + button.w // 2
+                big(buffer, button.label, (cx, button.y + 110), 1.8, gold, 5)
+                first, second = notes[button.id]
+                big(buffer, first, (cx, button.y + 230), 1.3)
+                big(buffer, second, (cx, button.y + 290), 1.3)
+            big(buffer, "SENALA UNA OPCION CON EL DEDO 1 SEGUNDO", (w // 2, h - 110), 1.5)
+
+    def _draw_turn_corner(self, buffer, view) -> None:
+        """A big quarter circle in the corner of the player in turn, and the pass-turn button."""
+        game = view.game or {}
+        player = game.get("current_player")
+        if game.get("phase") in (None, "free", "order", "seats", "mode", "reveal", "finished"):
+            return
+        if player not in view.corners:
+            return
+        corner = view.corners.index(player)
+        x, y, pw, ph = panel_rect(corner, self.width, self.height)
+        right = x > self.width / 2
+        bottom = y > self.height / 2
+        center = (self.width if right else 0, self.height if bottom else 0)
+        angle = {(False, False): 0, (True, False): 90, (True, True): 180, (False, True): 270}[
+            (right, bottom)
+        ]
+        color = PLAYER_BGR.get(player, DEFAULT_PLAYER_BGR)
+        cv2.ellipse(
+            buffer, center, (430, 430), 0, angle, angle + 90, (*color, 150), -1, cv2.LINE_AA
+        )
+        cv2.ellipse(
+            buffer, center, (430, 430), 0, angle, angle + 90, (*color, 255), 10, cv2.LINE_AA
+        )
+        label = f"JUEGA {player.upper()}"
+        height = 60
+        patch = np.zeros((height, pw, 4), dtype=np.uint8)
+        self._text(patch, label, (16, 44), 1.4, (255, 255, 255, 255))
+        patch[:, :, 3] = np.where(patch[:, :, 3] > 0, 255, 0)
+        gap = 14
+        for button in buttons(view, self.width, self.height):
+            if button.id != "end_turn":
+                continue
+            ly = button.y - height - gap if bottom else button.y + button.h + gap
+            if not bottom:
+                patch = cv2.rotate(patch, cv2.ROTATE_180)
+            buffer[ly : ly + height, x : x + pw] = patch
+            cv2.rectangle(
+                buffer,
+                (button.x, button.y),
+                (button.x + button.w, button.y + button.h),
+                (20, 20, 20, 235),
+                -1,
+            )
+            cv2.rectangle(
+                buffer,
+                (button.x, button.y),
+                (button.x + button.w, button.y + button.h),
+                (*color, 255),
+                8,
+            )
+            lines = ("PASAR TURNO", "PUNO 5 SEGUNDOS")
+            sub = np.zeros((button.h, button.w, 4), dtype=np.uint8)
+            self._big_text(sub, lines[0], (button.w // 2, button.h // 2 - 22), 1.2, (255,) * 4, 3)
+            self._big_text(sub, lines[1], (button.w // 2, button.h // 2 + 26), 0.9, (255,) * 4, 2)
+            if not bottom:
+                sub = cv2.rotate(sub, cv2.ROTATE_180)
+            mask = sub[:, :, 3] > 0
+            region = buffer[button.y : button.y + button.h, button.x : button.x + button.w]
+            region[mask] = sub[mask]
+
+    def _draw_roll_band(self, buffer, view) -> None:
+        """While everybody waits for the dice: whose turn it is, huge, in the middle."""
+        game = view.game or {}
+        if game.get("phase") != "roll" or not game.get("current_player"):
+            return
+        player = game["current_player"]
+        color = PLAYER_BGR.get(player, DEFAULT_PLAYER_BGR)
+        y0, y1 = self.height // 2 - 150, self.height // 2 + 150
+        band = buffer[y0:y1].copy()
+        band[:] = (20, 20, 20, 205)
+        buffer[y0:y1] = band
+        cv2.rectangle(buffer, (0, y0), (self.width, y1), (*color, 255), 10)
+        self._big_text(
+            buffer, f"TURNO DE {player.upper()}", (self.width // 2, y0 + 100), 3.6, (*color, 255), 8
+        )
+        self._big_text(
+            buffer, "ROCK PARA TIRAR LOS DADOS", (self.width // 2, y0 + 220), 1.8, (255,) * 4, 4
+        )
+
     def _generate_patches(self, current_time: float) -> list[ImagePatch]:
         view = self.state.catan if self.state is not None else None
         if view is None:
             return []
 
         buffer = np.zeros((self.height, self.width, 4), dtype=np.uint8)
+
+        kind = screen_kind(view)
+        if kind:
+            self._draw_screen(buffer, view, kind)
+            return [ImagePatch(x=0, y=0, width=self.width, height=self.height, data=buffer)]
 
         for tile in view.producing:
             poly = self._to_screen(hex_corners(tile.q, tile.r))
@@ -367,7 +558,9 @@ class CatanLayer(Layer):
         if view.dice is not None and view.total is not None:
             self._draw_dice(buffer, view.dice, view.total)
 
+        self._draw_turn_corner(buffer, view)
         self._draw_panels(buffer, view)
+        self._draw_roll_band(buffer, view)
         self._draw_banner(buffer, view)
 
         return [ImagePatch(x=0, y=0, width=self.width, height=self.height, data=buffer)]

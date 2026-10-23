@@ -35,6 +35,7 @@ def build_launch(
     monitors: list,
     windowed: bool = False,
     mock_camera: bool = False,
+    guided: bool = True,
 ) -> tuple[list[str], dict[str, str], list[str]]:
     """El comando, el entorno extra y los avisos para arrancar la app."""
     warnings: list[str] = []
@@ -50,6 +51,8 @@ def build_launch(
         env["LIGHT_MAP_WINDOWED"] = "1"
     if mock_camera:
         env["MOCK_CAMERA"] = "1"
+    if guided:
+        env["LIGHT_MAP_CATAN_WIZARD"] = "1"  # the projection opens the guided start
     command = [
         sys.executable,
         "-m",
@@ -84,7 +87,9 @@ def missing_files(data_dir: Path, map_path: Path, dist: Path) -> list[str]:
             "python scripts/generate_catan_board.py --balance fair"
         )
     if not (dist / "index.html").exists():
-        problems.append("El dashboard no está compilado: en la carpeta frontend corre npm run build.")
+        problems.append(
+            "El dashboard no está compilado: en la carpeta frontend corre npm run build."
+        )
     return problems
 
 
@@ -115,10 +120,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--camera", type=int, default=1, help="índice de la cámara USB (1)")
     parser.add_argument("--screen", type=int, default=1, help="pantalla del proyector (1)")
-    parser.add_argument("--confidence", type=float, default=0.4, help="umbral de detección de manos")
+    parser.add_argument(
+        "--confidence", type=float, default=0.4, help="umbral de detección de manos"
+    )
     parser.add_argument("--map", default="maps/catan.svg")
     parser.add_argument("--windowed", action="store_true", help="proyección en ventana pequeña")
     parser.add_argument("--skip-camera-check", action="store_true")
+    parser.add_argument("--no-guide", action="store_true", help="sin el modo guiado al arrancar")
     parser.add_argument("--mock-camera", action="store_true", help="sin cámara real (pruebas)")
     args = parser.parse_args()
 
@@ -146,7 +154,14 @@ def main() -> int:
         print("✓ La cámara entrega imagen.")
 
     command, env, warnings = build_launch(
-        args.camera, args.screen, args.confidence, args.map, monitors, args.windowed, args.mock_camera
+        args.camera,
+        args.screen,
+        args.confidence,
+        args.map,
+        monitors,
+        args.windowed,
+        args.mock_camera,
+        not args.no_guide,
     )
     for warning in warnings:
         print("!", warning)

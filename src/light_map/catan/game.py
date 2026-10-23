@@ -1,6 +1,8 @@
 """Turn-by-turn Catan rules on top of Board.
 
-Phases: order (a phased game only: everybody rolls a die, the highest starts), setup (two
+Phases: order (a phased game only: everybody rolls a die, the highest starts), seats and mode
+(a guided game only: each player picks a corner, then the table picks what comes first),
+setup (two
 rounds of settlement + road, the second round in reverse order), reveal (a phased game only:
 the tiles and then the number tokens appear one by one), roll, discard (after a 7), robber,
 steal, main (build, buy and play development cards, trade with the bank or with players,
@@ -48,6 +50,8 @@ FREE = "free"
 ORDER = "order"
 SETUP = "setup"
 REVEAL = "reveal"
+SEATS = "seats"
+MODE = "mode"
 ROLL = "roll"
 DISCARD = "discard"
 ROBBER = "robber"
@@ -60,6 +64,8 @@ PHASES = (
     ORDER,
     SETUP,
     REVEAL,
+    SEATS,
+    MODE,
     ROLL,
     DISCARD,
     ROBBER,
@@ -106,6 +112,9 @@ class GameState:
     pending_payout: list[tuple[str, Vertex]] = field(default_factory=list)
     order_groups: list[list[str]] = field(default_factory=list)
     order_rolls: dict[str, int] = field(default_factory=dict)
+    # Guided game
+    wizard: bool = False  # the table is guided: after the order come the seats and the mode
+    reveal_first: bool = False  # the board is revealed before the settlements are placed
     # Development cards
     resume_phase: str = MAIN  # where the game goes after a knight or a road building card
     free_roads: int = 0
@@ -139,6 +148,8 @@ class GameState:
             "pending_payout": [[p, vertex_to_list(v)] for p, v in self.pending_payout],
             "order_groups": [list(group) for group in self.order_groups],
             "order_rolls": dict(self.order_rolls),
+            "wizard": self.wizard,
+            "reveal_first": self.reveal_first,
             "resume_phase": self.resume_phase,
             "free_roads": self.free_roads,
             "dev_played": self.dev_played,
@@ -173,6 +184,8 @@ class GameState:
             pending_payout=[(p, vertex_from_list(v)) for p, v in data.get("pending_payout", [])],
             order_groups=[list(g) for g in data.get("order_groups", [])],
             order_rolls={p: int(n) for p, n in data.get("order_rolls", {}).items()},
+            wizard=bool(data.get("wizard", False)),
+            reveal_first=bool(data.get("reveal_first", False)),
             resume_phase=data.get("resume_phase", MAIN)
             if data.get("resume_phase") in PHASES
             else MAIN,
@@ -205,7 +218,10 @@ class Game:
         if state.phase == ORDER:
             pending = self.order_pending()
             return pending[0] if pending else None
-        if state.phase in (FREE, FINISHED, REVEAL) or not state.order:
+        if state.phase == SEATS:
+            pending = self.seats_pending()
+            return pending[0] if pending else None
+        if state.phase in (FREE, FINISHED, REVEAL, MODE) or not state.order:
             return None
         if state.phase == SETUP:
             n = len(state.order)
@@ -232,7 +248,7 @@ class Game:
 
     # Starting and leaving a game
 
-    def new_game(self, players: int, phased: bool = False) -> None:
+    def new_game(self, players: int, phased: bool = False, wizard: bool = False) -> None:
         """Clears the board and starts a game.
 
         A phased game hides the tiles: first everybody rolls for the turn order, then the
@@ -243,6 +259,7 @@ class Game:
         board.roads.clear()
         board.hands.clear()
         board.longest_road_owner = None
+        board.seats = {}
         board.dev = DevCards.new(self.rng)
         board.set_player_count(players)
         board.robber = next(
@@ -262,6 +279,7 @@ class Game:
         self.board.game = GameState(
             phase=ORDER,
             phased=True,
+            wizard=wizard,
             hidden=True,
             order_groups=[list(board.players)],
             tile_order=tile_order,
@@ -307,7 +325,7 @@ class Game:
         state.last_settlement = vertex
         state.setup_step = "road"
         if state.setup_index >= len(state.order):  # second round pays the adjacent tiles
-            if state.phased:
+            if state.hidden:
                 state.pending_payout.append((player, vertex))  # paid after the reveal
             else:
                 self._pay_adjacent_tiles(player, vertex)
@@ -325,7 +343,7 @@ class Game:
         state.setup_step = "settlement"
         if state.setup_index >= 2 * len(state.order):
             state.current = 0
-            if state.phased:
+            if state.hidden:
                 state.phase = REVEAL
             else:
                 state.phase = ROLL
@@ -371,10 +389,47 @@ class Game:
         if all(len(g) == 1 for g in state.order_groups):
             state.order = [g[0] for g in state.order_groups]
             state.order_groups = []
-            state.phase = SETUP
             state.setup_index = 0
             state.setup_step = "settlement"
+            state.phase = SEATS if state.wizard else SETUP
         return value
+
+    # Seats and mode (guided games)
+
+    def seats_pending(self) -> list[str]:
+        """Players, in turn order, who have not picked their corner yet."""
+        if self.state.phase != SEATS:
+            return []
+        return [p for p in self.state.order if p not in self.board.seats]
+
+    def seat(self, player: str, corner: int) -> None:
+        """The player sits in a corner of the table (0 to 3); the panel and the turn light go there."""
+        self._require(SEATS)
+        pending = self.seats_pending()
+        if player not in pending:
+            raise ValueError(f"{player} already has a corner")
+        corner = int(corner)
+        if not 0 <= corner < 4:
+            raise ValueError("The table has four corners")
+        if corner in self.board.seats.values():
+            raise ValueError("That corner is taken")
+        self.board.seats[player] = corner
+        if len(pending) == 1:
+            self.state.phase = MODE
+
+    def choose_mode(self, first: str) -> None:
+        """ "map" reveals the board first; "houses" places the settlements on the empty board."""
+        self._require(MODE)
+        state = self.state
+        if first == "map":
+            state.reveal_first = True
+            state.phase = REVEAL
+        elif first == "houses":
+            state.phase = SETUP
+        else:
+            raise ValueError("Choose the map or the houses")
+        state.setup_index = 0
+        state.setup_step = "settlement"
 
     # Reveal (phased games)
 
@@ -428,8 +483,14 @@ class Game:
         for player, vertex in state.pending_payout:
             self._pay_adjacent_tiles(player, vertex)
         state.pending_payout = []
-        state.phase = ROLL
         state.current = 0
+        if state.reveal_first:  # the board is out: now the settlements
+            state.reveal_first = False
+            state.phase = SETUP
+            state.setup_index = 0
+            state.setup_step = "settlement"
+            return
+        state.phase = ROLL
         state.turn = 1
 
     # Building
@@ -764,6 +825,10 @@ class Game:
             pending = ", ".join(self.order_pending())
             tail = f" (ya sacaron: {rolled})" if rolled else ""
             return f"¿Quién empieza? Tira el dado: {pending}{tail}."
+        if state.phase == SEATS:
+            return f"Elige tu esquina: {who}."
+        if state.phase == MODE:
+            return "¿Qué va primero: armar el mapa o poner las casas?"
         if state.phase == REVEAL:
             done, total = self.reveal_total()
             return f"Revelando el tablero: {done} de {total}."

@@ -166,6 +166,8 @@ export interface CatanGameState {
   phase:
     | 'free'
     | 'order'
+    | 'seats'
+    | 'mode'
     | 'setup'
     | 'reveal'
     | 'roll'

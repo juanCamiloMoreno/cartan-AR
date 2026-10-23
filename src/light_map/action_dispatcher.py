@@ -104,6 +104,8 @@ class ActionDispatcher:
         self.register("CATAN_DEV_PLAY", handle_catan_dev_play)
         self.register("CATAN_DEV_SKIP", handle_catan_dev_skip)
         self.register("CATAN_ORDER_ROLL", handle_catan_order_roll)
+        self.register("CATAN_WIZARD_START", handle_catan_wizard_start)
+        self.register("CATAN_UI", handle_catan_ui)
         self.register("CATAN_REVEAL_NEXT", handle_catan_reveal_next)
         self.register("CATAN_REVEAL_ALL", handle_catan_reveal_all)
         self.register("TOGGLE_EXCLUSIVE_VISION", handle_toggle_exclusive_vision)
@@ -535,7 +537,7 @@ def handle_catan_roll(
         except ValueError:
             logging.warning("CATAN_ROLL: ignoring invalid dice payload %r", raw)
 
-    if manager.game_active and manager.board.game.phase != "roll":
+    if manager.game_active and manager.board.game.phase not in ("roll", "order"):
         logging.info("CATAN_ROLL ignored: not the roll phase (%s)", manager.board.game.phase)
         return None
     manager.roll(state, dice)
@@ -604,7 +606,9 @@ def handle_catan_new_game(
         return None
     try:
         data = _catan_payload(payload)
-        manager.new_game(state, data["players"], bool(data.get("phased", False)))
+        manager.new_game(
+            state, data["players"], bool(data.get("phased", False)), bool(data.get("wizard", False))
+        )
     except (ValueError, KeyError, TypeError) as exc:
         logging.warning("new_game rejected: %s", exc)
         _catan_refused(app, manager, state, exc)
@@ -663,6 +667,20 @@ def handle_catan_new_board(
         return None
     _reload_map_if_needed(app, manager)  # redraw the map with the new tiles
     return None
+
+
+def handle_catan_wizard_start(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """Opens the guided start on the projection (players, board rules, order, corners)."""
+    return _run_catan(app, payload, state, "start_wizard")
+
+
+def handle_catan_ui(
+    app: "InteractiveApp", payload: dict[str, Any], state: Optional["WorldState"] = None
+) -> Optional["SceneTransition"]:
+    """A button of the guided screens. Payload: {"button": "players:3"}."""
+    return _run_catan(app, payload, state, "press", "button")
 
 
 def handle_catan_order_roll(

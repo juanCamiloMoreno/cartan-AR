@@ -20,6 +20,11 @@ Si no sabes cuál cámara es: `python scripts/list_cameras.py` y mira las fotos;
 
 ## Pruebas, en orden
 
+Al arrancar, la proyección abre sola el **modo guiado** (pantallas grandes: jugadores, reglas, dados,
+esquinas, qué va primero). Síguelo con las manos: señalar 1 s para botones, puño 3 s en tu esquina,
+roca para tirar dado, puño 5 s para pasar turno. Los pasos de abajo son para revisar que cada gesto
+funcione.
+
 1. **Encaje:** el tablero proyectado ocupa la mesa y los 4 paneles de jugador se ven en las esquinas.
 2. **Mano:** pon la mano abierta sobre la mesa: debe aparecer un aro bajo la mano.
 3. **Dados (roca):** cierra el puño 1 s → se tiran los dados.

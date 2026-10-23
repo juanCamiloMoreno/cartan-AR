@@ -298,6 +298,9 @@ class TimerKey(StrEnum):
     CATAN_STATS_HOLD = "catan_stats_hold"
     CATAN_STATS_COOLDOWN = "catan_stats_cooldown"
     CATAN_BUILD_HOLD = "catan_build_hold"
+    CATAN_BUTTON_HOLD = "catan_button_hold"
+    CATAN_BUTTON_COOLDOWN = "catan_button_cooldown"
+    CATAN_REVEAL_TICK = "catan_reveal_tick"
     CATAN_BUILD_COOLDOWN = "catan_build_cooldown"
 
 
@@ -401,6 +404,10 @@ class Action(StrEnum):
     CATAN_STATS_REQUEST = "CATAN_STATS_REQUEST"
     # Sent by showing "peace" while a corner or side of the board is aimed at (builds there).
     CATAN_BUILD_REQUEST = "CATAN_BUILD_REQUEST"
+    # Sent by holding a gesture on a button of the guided screens.
+    CATAN_BUTTON_REQUEST = "CATAN_BUTTON_REQUEST"
+    # The guided reveal shows the next tile on its own.
+    CATAN_REVEAL_REQUEST = "CATAN_REVEAL_REQUEST"
 
 
 @dataclass

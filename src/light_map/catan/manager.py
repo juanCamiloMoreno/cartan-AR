@@ -33,6 +33,7 @@ from light_map.catan.layout import (
 )
 from light_map.catan.svg import build_blank_svg, build_svg
 from light_map.catan.view import BuildingView, CatanView, ProducingTile, RoadView
+from light_map.catan.wizard import Wizard
 from light_map.state.world_state import WorldState
 
 
@@ -47,6 +48,9 @@ class CatanManager:
         self.notice: dict | None = None  # last rejected move, shown on the dashboard
         self.map_dirty = False  # the SVG changed: the app has to reload the map
         self._svg_blank = False
+        self.wizard: Wizard | None = None  # the guided start, before a game exists
+        self.autostart = os.environ.get("LIGHT_MAP_CATAN_WIZARD") == "1"
+        self._autostarted = False
 
     # Loading and saving
 
@@ -73,6 +77,9 @@ class CatanManager:
     def sync(self, state: WorldState, svg_path: str | None) -> bool:
         """Loads the board for a map and publishes it (or clears the view if there is none)."""
         if self.load_for_map(svg_path):
+            if self.autostart and not self._autostarted:
+                self._autostarted = True
+                self.wizard = Wizard()
             self.publish(state)
             return True
         state.catan = None
@@ -109,10 +116,13 @@ class CatanManager:
             "hint": game.hint(),
             "costs": COSTS,
             "phased": state.phased,
+            "wizard": state.wizard,
             "hidden": state.hidden,
             "order": list(state.order),
             "order_rolls": dict(state.order_rolls),
             "order_pending": game.order_pending(),
+            "seats_pending": game.seats_pending(),
+            "reveal_first": state.reveal_first,
             "reveal_done": game.reveal_total()[0],
             "reveal_total": game.reveal_total()[1],
             "trade": state.trade,
@@ -218,6 +228,8 @@ class CatanManager:
             ),
             board=self._geometry(),
             players=tuple(board.players),
+            corners=tuple(board.corners()),
+            wizard=self.wizard.to_dict() if self.wizard and self.wizard.step != "game" else None,
             game=self._game_view(game),
             generator=self.report.to_dict() if self.report and not hidden else None,
             notice=self.notice,
@@ -234,6 +246,9 @@ class CatanManager:
         if self.board is None:
             return None
         if self.game_active:
+            if self.board.game.phase == "order":  # the first throw decides who starts
+                self.order_roll(state, self.game.current_player)
+                return None
             self.game.roll(dice)
         else:
             self.last_dice = dice or roll_dice(self.rng)
@@ -322,12 +337,15 @@ class CatanManager:
         self._svg_blank = blank
         self.map_dirty = True
 
-    def new_game(self, state: WorldState, players: int, phased: bool = False) -> None:
+    def new_game(
+        self, state: WorldState, players: int, phased: bool = False, wizard: bool = False
+    ) -> None:
         """Clears the board and starts a game with the turn rules.
 
         A phased game also blanks the map: the tiles come out during the reveal.
         """
-        self.game.new_game(int(players), bool(phased))
+        self.wizard = None
+        self.game.new_game(int(players), bool(phased), bool(wizard))
         self.last_dice = None
         if phased:
             self._write_svg(blank=True)
@@ -380,6 +398,41 @@ class CatanManager:
     def bank_trade(self, state: WorldState, player: str, give: str, get: str) -> None:
         self.game.bank_trade(player, give, get)
         self._save()
+        self.publish(state)
+
+    # Guided start
+
+    def start_wizard(self, state: WorldState) -> None:
+        """Opens the guided start: players, board rules, order, corners and what goes first."""
+        self.wizard = Wizard()
+        self.publish(state)
+
+    def press(self, state: WorldState, button: str) -> None:
+        """A button of the guided screens was pressed (by hand on the table or from the PC)."""
+        wizard = self.wizard
+        game = self.game
+        phase = self.board.game.phase if self.board else FREE
+        if button == "end_turn":
+            self.end_turn(state)
+            return
+        if phase == "seats" and button.startswith("seat:"):
+            game.seat(game.current_player, int(button.split(":")[1]))
+            self._save()
+            self.publish(state)
+            return
+        if phase == "mode" and button in ("map", "houses"):
+            game.choose_mode(button)
+            self._save()
+            self.publish(state)
+            return
+        if wizard is None or wizard.step == "game":
+            raise ValueError("There is nothing to press now")
+        if wizard.press(button):  # the rules were accepted: build the board and start the game
+            self.new_board(state, wizard.rules)
+            self.new_game(state, wizard.players, phased=True, wizard=True)
+            self.wizard = Wizard(step="game", players=wizard.players, rules=wizard.rules)
+            self.publish(state)
+            return
         self.publish(state)
 
     # New board

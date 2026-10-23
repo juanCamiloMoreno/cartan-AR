@@ -124,6 +124,22 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   construye para el jugador en turno. El juego sigue aplicando las reglas (costos, distancia,
   conexión); si no se puede, la proyección dice por qué. La marca dura 4 s después de dejar de
   señalar. En la preparación solo se puede señalar lo que toca (casa y luego camino).
+- **Modo guiado (arrancar una partida solo con las manos):** al abrir la app con
+  `iniciar_catan.bat` (o con el botón "Modo guiado" del panel) la proyección muestra pantallas
+  grandes, una a la vez. Todo se hace **señalando 1 s** un botón, salvo donde se indica otro gesto:
+  1. **Cuántos jugadores** (2, 3 o 4).
+  2. **Reglas del tablero:** recursos iguales juntos, 6 y 8 juntos, 2 y 12 juntos, números iguales
+     juntos, puertos al azar (cada una SI/NO) y el equilibrio (libre / justo / muy justo).
+     Abajo, **OK** genera el tablero y **ATRAS** vuelve.
+  3. **Quién empieza:** "TURNO — AZUL": quien debe tirar pone la mano en **roca** y se tira su dado
+     (se repite si hay empate).
+  4. **Esquinas:** cada jugador, en el orden que salió, lleva el **puño** a un círculo de su
+     esquina durante **3 s**. El panel de ese jugador queda en esa esquina.
+  5. **Qué va primero:** *1 armar el mapa* (el tablero se revela solo, ficha por ficha, y luego se
+     ponen las casas) o *2 poner las casas* (se ponen sobre el tablero oculto y luego se revela).
+  6. **A jugar:** la esquina de quien tiene el turno se pinta con un cuarto de círculo grande con
+     "JUEGA ROJO" y un botón **PASAR TURNO** (puño 5 s). Al empezar cada turno aparece en el centro
+     "TURNO DE AZUL — ROCK PARA TIRAR LOS DADOS". Construir se hace señalando + paz (ver arriba).
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 
 Se apaga la niebla de guerra automáticamente en los mapas que tienen un tablero de Catan.
