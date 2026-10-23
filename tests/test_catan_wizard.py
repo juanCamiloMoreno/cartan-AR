@@ -403,3 +403,26 @@ def test_the_wizard_object_keeps_its_rules_independent():
     first.rules["allow_adjacent_red"] = True
     assert second.rules["allow_adjacent_red"] is False
     assert g.SEATS == "seats" and g.MODE == "mode"
+
+
+def test_pointing_at_the_panel_in_the_chosen_corner_toggles_that_player(context):
+    manager, state = fresh()
+    to_game(manager, state)
+    finish_order(manager, state)
+    first = state.catan.game["current_player"]
+    manager.press(
+        state, "seat:3"
+    )  # the first player takes the corner that is not theirs by default
+    for corner in (0, 1):
+        manager.press(state, f"seat:{corner}")
+    manager.press(state, "houses")
+    scene = scene_for(context, state)
+    x, y, w, h = panel_rect(3, W, H)
+    scene.update(hand(GestureType.POINTING, (x + w // 2, y + h // 2)), [], 0.0)
+    assert scene._stats_target == ("stats", first)
+
+
+def test_the_shaka_is_in_the_mouse_menu():
+    from light_map.input.mouse_hands import MENU_ITEMS
+
+    assert GestureType.SHAKA in [gesture for gesture, _ in MENU_ITEMS]

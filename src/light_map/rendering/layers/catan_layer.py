@@ -1,4 +1,5 @@
 import math
+import time
 
 import cv2
 import numpy as np
@@ -42,9 +43,12 @@ RESOURCE_SHORT = {"wood": "Mad", "brick": "Lad", "sheep": "Ove", "wheat": "Tri",
 PANEL_SIMPLE_H = 172
 ROAD_THICKNESS = 9
 
-DIE_SIZE = 84
-DIE_GAP = 18
-DIE_MARGIN = 24
+DIE_SIZE = 104
+DIE_GAP = 20
+DIE_MARGIN = 28
+PULSE_NS = 100_000_000  # the glow of the producing tiles is redrawn every 0.1 s
+DIM_FIRST_SECONDS = 6.0  # how long the board stays dark after a roll
+DIM_STRONG, DIM_SOFT = 175, 85
 # Pip positions on a 3x3 grid (column, row), by die value.
 PIPS = {
     1: [(1, 1)],
@@ -107,23 +111,45 @@ class CatanLayer(Layer):
     """Highlights the tiles that produce on the last roll and marks the robber."""
 
     def __init__(self, state: WorldState, map_system: MapSystem, width: int, height: int):
-        super().__init__(state=state, is_static=True)
+        super().__init__(state=state, is_static=False)
         self.map_system = map_system
         self.width = width
         self.height = height
+        self._producing_key: tuple | None = None
+        self._producing_since = 0.0
 
     def get_current_version(self) -> int:
         if self.state is None:
             return 0
-        return max(self.state.catan_version, self.state.viewport_version)
+        version = max(self.state.catan_version, self.state.viewport_version)
+        view = self.state.catan
+        if view is not None and view.producing:
+            # the glow breathes: ask for a redraw a few times per second
+            return max(version, time.monotonic_ns() // PULSE_NS * PULSE_NS)
+        return version
 
     def _to_screen(self, points: list[tuple[float, float]]) -> np.ndarray:
         return np.array([self.map_system.world_to_screen(x, y) for x, y in points], np.int32)
 
     def _draw_dice(self, buffer: np.ndarray, dice: tuple[int, int], total: int) -> None:
         """Draws both dice and their total in the top-right corner of the projection."""
-        y0 = DIE_MARGIN
-        second_x0 = self.width - DIE_MARGIN - DIE_SIZE
+        y0 = DIE_MARGIN + 12
+        second_x0 = self.width - DIE_MARGIN - DIE_SIZE - 12
+        plate = (second_x0 - DIE_GAP - DIE_SIZE - 20, y0 - 20)
+        cv2.rectangle(
+            buffer,
+            plate,
+            (self.width - DIE_MARGIN + 6, y0 + DIE_SIZE + 78),
+            (20, 20, 20, 240),
+            -1,
+        )
+        cv2.rectangle(
+            buffer,
+            plate,
+            (self.width - DIE_MARGIN + 6, y0 + DIE_SIZE + 78),
+            (*HIGHLIGHT_BGR, 255),
+            4,
+        )
         for x0, value in ((second_x0 - DIE_GAP - DIE_SIZE, dice[0]), (second_x0, dice[1])):
             top_left, bottom_right = (x0, y0), (x0 + DIE_SIZE, y0 + DIE_SIZE)
             cv2.rectangle(buffer, top_left, bottom_right, (245, 245, 245, 255), -1)
@@ -134,7 +160,7 @@ class CatanLayer(Layer):
                 cv2.circle(buffer, (px, py), 8, (20, 20, 20, 255), -1, cv2.LINE_AA)
 
         label = f"= {total}"
-        origin = (second_x0 - DIE_GAP - DIE_SIZE, y0 + DIE_SIZE + 44)
+        origin = (second_x0 - DIE_GAP - DIE_SIZE, y0 + DIE_SIZE + 58)
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(buffer, label, origin, font, 1.5, (20, 20, 20, 255), 8, cv2.LINE_AA)
         cv2.putText(buffer, label, origin, font, 1.5, (255, 255, 255, 255), 3, cv2.LINE_AA)
@@ -495,6 +521,26 @@ class CatanLayer(Layer):
             buffer, "ROCK PARA TIRAR LOS DADOS", (self.width // 2, y0 + 220), 1.8, (255,) * 4, 4
         )
 
+    def _draw_production(self, buffer: np.ndarray, view, now: float) -> None:
+        """Darkens the board and lights up (with a soft pulse) the tiles that pay on this roll."""
+        key = (view.total, tuple((t.q, t.r) for t in view.producing))
+        if key != self._producing_key:
+            self._producing_key = key
+            self._producing_since = now
+        strong = now - self._producing_since < DIM_FIRST_SECONDS
+        buffer[:] = (22, 16, 16, DIM_STRONG if strong else DIM_SOFT)
+        pulse = 0.5 + 0.5 * math.sin(now * 5.0)
+        polys = [self._to_screen(hex_corners(t.q, t.r)) for t in view.producing]
+        for poly in polys:
+            cv2.fillPoly(buffer, [poly], (0, 0, 0, 0), lineType=cv2.LINE_AA)  # full colors again
+        for poly in polys:
+            glow = int(60 + 120 * pulse)
+            cv2.polylines(buffer, [poly], True, (*HIGHLIGHT_BGR, glow), 26, cv2.LINE_AA)
+            cv2.polylines(buffer, [poly], True, (*HIGHLIGHT_BGR, 255), 9, cv2.LINE_AA)
+            cv2.polylines(
+                buffer, [poly], True, (255, 255, 255, int(120 + 135 * pulse)), 3, cv2.LINE_AA
+            )
+
     def _generate_patches(self, current_time: float) -> list[ImagePatch]:
         view = self.state.catan if self.state is not None else None
         if view is None:
@@ -507,14 +553,8 @@ class CatanLayer(Layer):
             self._draw_screen(buffer, view, kind)
             return [ImagePatch(x=0, y=0, width=self.width, height=self.height, data=buffer)]
 
-        for tile in view.producing:
-            poly = self._to_screen(hex_corners(tile.q, tile.r))
-            fill = buffer.copy()
-            cv2.fillPoly(fill, [poly], (*HIGHLIGHT_BGR, 110), lineType=cv2.LINE_AA)
-            buffer = fill
-            cv2.polylines(
-                buffer, [poly], True, (*HIGHLIGHT_BGR, 255), thickness=6, lineType=cv2.LINE_AA
-            )
+        if view.producing:
+            self._draw_production(buffer, view, current_time)
 
         self._draw_revealed_tiles(buffer, view)
         self._draw_ports(buffer, view)

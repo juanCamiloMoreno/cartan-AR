@@ -399,7 +399,7 @@ class ViewingScene(BaseMapScene):
                 if cell in tiles and cell != view.robber:
                     return "robber", cell
                 continue
-            player = panel_at(hand.proj_pos, list(view.players), config.width, config.height)
+            player = panel_at(hand.proj_pos, list(view.corners), config.width, config.height)
             if not player:
                 continue
             if phase == "steal":

@@ -32,10 +32,12 @@ class PersistenceService:
         self.app.map_system.svg_loader = SVGLoader(filename)
 
         # Update WorldState for rendering
-        self.state.map_render_state = MapRenderState(
-            opacity=self.app.layer_manager.map_layer.opacity,
-            quality=self.app.layer_manager.map_layer.quality,
-            filepath=filename,
+        self.state.reload_map_render_state(
+            MapRenderState(
+                opacity=self.app.layer_manager.map_layer.opacity,
+                quality=self.app.layer_manager.map_layer.quality,
+                filepath=filename,
+            )
         )
 
         entry = self.map_config.data.maps.get(filename)

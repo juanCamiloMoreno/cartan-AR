@@ -27,6 +27,7 @@ class MapLayer(Layer):
 
         # Cache Tracking
         self._last_render_params: dict[str, Any] = {}
+        self._last_map_version = 0
         self._last_opacity: float = 1.0
         self._cached_map_bgra: np.ndarray | None = None
 
@@ -71,7 +72,14 @@ class MapLayer(Layer):
         current_params["quality"] = self.quality
 
         # Only re-render SVG if params changed or cache is empty
-        if current_params != self._last_render_params or self._cached_map_bgra is None:
+        # (a map file rewritten under the same name publishes a new map version)
+        map_version = self.state.map_version if self.state is not None else 0
+        if (
+            current_params != self._last_render_params
+            or map_version != self._last_map_version
+            or self._cached_map_bgra is None
+        ):
+            self._last_map_version = map_version
             # Render from SVG
             map_bgr = self.map_system.svg_loader.render(self.width, self.height, **current_params)
             # Convert BGR to BGRA and cache the result

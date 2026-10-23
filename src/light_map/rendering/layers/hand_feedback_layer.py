@@ -88,7 +88,7 @@ class HandFeedbackLayer(Layer):
             if cell in tiles and cell != view.robber:
                 return "ladron", cell
             return None
-        player = panel_at(hand.proj_pos, list(view.players), self.width, self.height)
+        player = panel_at(hand.proj_pos, list(view.corners), self.width, self.height)
         if not player:
             return None
         if phase == "steal":
@@ -196,7 +196,7 @@ class HandFeedbackLayer(Layer):
             return ImagePatch(x=x, y=y, width=w, height=h, data=patch)
         if what in ("robar", "panel", "aceptar"):
             view = self.state.catan
-            index = list(view.players).index(target)
+            index = list(view.corners).index(target)
             x, y, w, h = panel_rect(index, self.width, self.height)
             patch = np.zeros((h, w, 4), dtype=np.uint8)
             cv2.rectangle(patch, (0, 0), (w - 1, h - 1), (*color, 255), 12)

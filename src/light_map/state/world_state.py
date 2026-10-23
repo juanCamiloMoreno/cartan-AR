@@ -219,6 +219,12 @@ class WorldState:
     def map_render_state(self, value: MapRenderState):
         self._map_render_state_atom.update(value)
 
+    def reload_map_render_state(self, value: MapRenderState):
+        """Publishes the map render state even if it equals the old one (the file changed)."""
+        # the clock can be coarse (Windows): the version must still change
+        stamp = max(time.monotonic_ns(), self._map_render_state_atom.timestamp + 1)
+        self._map_render_state_atom.update(value, force_timestamp=stamp)
+
     @property
     def fow_mask(self) -> np.ndarray | None:
         return self._fow_mask_atom.value

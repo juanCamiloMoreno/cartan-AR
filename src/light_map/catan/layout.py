@@ -94,7 +94,7 @@ def port_anchor(edge, tiles) -> tuple[float, float]:
 PANEL_W = 360
 PANEL_H = 262  # tallest panel (resources mode); also the hit area for gestures
 PANEL_MARGIN = 20
-DICE_CLEARANCE = 200  # keeps the top-right panel below the dice
+DICE_CLEARANCE = 290  # keeps the top-right panel below the dice
 # Seat order: two players sit opposite each other, then the other two corners fill in.
 CORNERS = ("bottom_left", "top_right", "top_left", "bottom_right")
 
@@ -128,7 +128,9 @@ def panel_rect(index: int, width: int, height: int) -> tuple[int, int, int, int]
 
 def panel_at(point: tuple[float, float], players: list[str], width: int, height: int):
     """The player whose panel contains the screen point, or None."""
-    for index, player in enumerate(players):
+    for index, player in enumerate(players):  # one entry per corner; None: nobody sits there
+        if player is None:
+            continue
         x, y, w, h = panel_rect(index, width, height)
         if x <= point[0] <= x + w and y <= point[1] <= y + h:
             return player

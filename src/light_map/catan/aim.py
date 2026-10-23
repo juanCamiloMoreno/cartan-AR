@@ -99,7 +99,7 @@ class BuildAim:
         for hand in hands:
             if hand.gesture != AIM_GESTURE:
                 continue
-            if panel_at(hand.proj_pos, list(view.players), *screen_size):
+            if panel_at(hand.proj_pos, list(view.corners), *screen_size):
                 continue  # pointing at a player's panel is for the statistics, not for building
             spot = nearest_spot(screen_to_world(*hand.proj_pos), tiles, kinds)
             if spot is not None:

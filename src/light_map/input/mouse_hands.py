@@ -24,6 +24,7 @@ MENU_ITEMS: tuple[tuple[GestureType | None, str], ...] = (
     (GestureType.VICTORY, "PAZ  (construir)"),
     (GestureType.OPEN_PALM, "PALMA"),
     (GestureType.GUN, "PISTOLA"),
+    (GestureType.SHAKA, "SHAKA  (abrir el menu)"),
     (None, "SIN MANO"),
 )
 MENU_W = 520

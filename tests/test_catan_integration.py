@@ -137,14 +137,18 @@ def test_layer_highlights_only_producing_tiles():
     manager = CatanManager(board=small_board())
     manager.roll(state, dice=(4, 4))  # total 8 -> brick at (1, 0)
     layer = make_layer(state)
+    layer.width, layer.height = 1920, 1080  # room for the panels away from the tiles
 
     (patch,), _ = layer.render()
-    assert patch.data.shape == (800, 800, 4)
+    assert patch.data.shape == (1080, 1920, 4)
 
     hit_x, hit_y = (int(v) for v in tile_center(1, 0))
     miss_x, miss_y = (int(v) for v in tile_center(0, 0))
-    assert patch.data[hit_y, hit_x, 3] > 0
-    assert patch.data[miss_y, miss_x, 3] == 0
+    alpha = patch.data[..., 3]
+    hit_area = alpha[hit_y - 25 : hit_y + 25, hit_x - 25 : hit_x + 25]
+    miss_area = alpha[miss_y - 25 : miss_y + 25, miss_x - 25 : miss_x + 25]
+    assert (hit_area == 0).any()  # the paying tile keeps its full colors
+    assert (miss_area > 0).all()  # the others are darkened
     assert patch.data.dtype == np.uint8
 
 
