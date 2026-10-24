@@ -96,3 +96,13 @@ def test_draw_marks_the_hint_and_the_menu():
     mouse.on_mouse(cv2.EVENT_RBUTTONDOWN, 400, 300)
     mouse.draw(image)
     assert int(image.sum()) > hint_only * 10
+
+
+def test_the_fps_counter_follows_the_frame_rate_and_is_drawn_on_top():
+    mouse = MouseHands(W, H)
+    for i in range(60):
+        mouse.tick(now=1.0 + i * 0.05)  # 20 frames per second
+    assert 19 < mouse.fps < 21
+    image = np.zeros((H, W, 3), np.uint8)
+    mouse.draw(image)
+    assert image[:70, W // 2 + 480 :].any()  # the label is in the top strip

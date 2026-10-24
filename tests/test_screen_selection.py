@@ -72,3 +72,10 @@ def test_hand_detection_confidence_is_adjustable_and_clamped(monkeypatch, raw, e
     else:
         monkeypatch.setenv(HAND_CONFIDENCE_ENV, raw)
     assert hand_detection_confidence() == expected
+
+
+def test_the_fine_timer_request_never_raises():
+    from light_map.core.display_utils import enable_fine_timer
+
+    enable_fine_timer()
+    enable_fine_timer()

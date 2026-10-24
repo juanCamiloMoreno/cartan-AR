@@ -69,6 +69,7 @@ class ProjectorWindow:
         self.height = height
         self.closed = False
         self._frames_shown = 0
+        enable_fine_timer()
 
         # Create window and set to fullscreen
         cv2.namedWindow(self.name, cv2.WINDOW_NORMAL)
@@ -93,14 +94,16 @@ class ProjectorWindow:
         # In the current architecture, keys are handled by MainLoopController via waitKey(1)
         return -1
 
-    def update_image(self, bgr_frame: np.ndarray) -> int:
+    def update_image(self, bgr_frame: np.ndarray, pump: bool = True) -> int:
+        """Shows a frame. pump=False skips this call's waitKey (each one costs about 10 ms on
+        Windows); the main loop already pumps the window events once per frame."""
         if self.closed:
             return -1
 
         try:
             cv2.imshow(self.name, bgr_frame)
             self._frames_shown += 1
-            return cv2.waitKey(1)
+            return cv2.waitKey(1) if pump else -1
         except Exception as e:
             logging.error(f"Error updating window {self.name}: {e}")
             self.closed = True
@@ -286,6 +289,19 @@ def selected_screen() -> int | None:
         return max(0, int(raw))
     except ValueError:
         return None
+
+
+def enable_fine_timer() -> None:
+    """Asks Windows for a 1 ms timer: by default time.sleep(0.001) and cv2.waitKey(1) can take
+    up to 15 ms each, which alone caps a frame loop at about 30 frames per second."""
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    try:
+        ctypes.windll.winmm.timeBeginPeriod(1)
+    except Exception:
+        pass
 
 
 def enable_dpi_awareness() -> None:

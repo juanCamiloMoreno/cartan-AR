@@ -5,6 +5,64 @@ from light_map.core.common_types import ImagePatch, LayerMode
 from light_map.core.constants import ALPHA_OPAQUE
 
 
+def _bgr(patch_slice: np.ndarray) -> np.ndarray:
+    """The color channels of a patch as a contiguous array (fast SIMD copy instead of numpy's
+    strided slice, which takes several times longer on a full screen)."""
+    if patch_slice.shape[2] == 4:
+        return cv2.cvtColor(np.ascontiguousarray(patch_slice), cv2.COLOR_BGRA2BGR)
+    return np.ascontiguousarray(patch_slice)
+
+
+_OPAQUE_CACHE: dict[int, tuple[np.ndarray, bool]] = {}
+
+
+def covers_screen(
+    patch: ImagePatch, mode: LayerMode, screen_width: int, screen_height: int
+) -> bool:
+    """True when the patch hides everything below it (full screen and no transparent pixel).
+
+    The answer is remembered per patch array: layers keep returning the same arrays until
+    they change, so the pixel check is only paid once.
+    """
+    data = patch.data
+    if (patch.x, patch.y, patch.width, patch.height) != (0, 0, screen_width, screen_height):
+        return False
+    if data.shape[:2] != (screen_height, screen_width):
+        return False
+    if mode == LayerMode.BLOCKING or data.shape[2] == 3:
+        return mode != LayerMode.MASKED
+    if mode != LayerMode.NORMAL:
+        return False
+    cached = _OPAQUE_CACHE.get(id(data))
+    if cached is not None and cached[0] is data:
+        return cached[1]
+    lowest = cv2.minMaxLoc(cv2.extractChannel(np.ascontiguousarray(data), 3))[0]
+    opaque = lowest == 255
+    if len(_OPAQUE_CACHE) > 32:
+        _OPAQUE_CACHE.clear()
+    _OPAQUE_CACHE[id(data)] = (data, opaque)
+    return opaque
+
+
+SPARSE_FRACTION = 0.35  # below this share of visible pixels only those are blended
+
+
+def _blend_sparse(buffer, x1, y1, patch_slice, alpha_channel, touched) -> None:
+    """The variable-alpha blend of composite_patch, restricted to the pixels with alpha > 0."""
+    h, w = alpha_channel.shape
+    dst = buffer[y1 : y1 + h, x1 : x1 + w]
+    a = alpha_channel[touched].astype(np.uint16)
+    inv = ALPHA_OPAQUE - a
+    colors = patch_slice[:, :, :3][touched].astype(np.uint16)
+    below = dst[:, :, :3][touched].astype(np.uint16)
+    dst[:, :, :3][touched] = ((colors * a[:, None] + below * inv[:, None]) // ALPHA_OPAQUE).astype(
+        np.uint8
+    )
+    if buffer.shape[2] == 4:
+        dst_alpha = dst[:, :, 3][touched].astype(np.uint16)
+        dst[:, :, 3][touched] = (a + dst_alpha * inv // ALPHA_OPAQUE).astype(np.uint8)
+
+
 def composite_patch(
     buffer: np.ndarray,
     patch: ImagePatch,
@@ -42,7 +100,7 @@ def composite_patch(
 
     if mode == LayerMode.BLOCKING:
         # Fast slice assignment (ignore alpha)
-        buffer[buffer_y1:buffer_y2, buffer_x1:buffer_x2, :3] = patch_slice[:, :, :3]
+        buffer[buffer_y1:buffer_y2, buffer_x1:buffer_x2, :3] = _bgr(patch_slice)
         if buffer.shape[2] == 4:
             buffer[buffer_y1:buffer_y2, buffer_x1:buffer_x2, 3] = ALPHA_OPAQUE
 
@@ -79,18 +137,20 @@ def composite_patch(
 
     else:  # LayerMode.NORMAL
         if patch_slice.shape[2] == 4:
-            alpha_channel = patch_slice[:, :, 3]
-            if not np.any(alpha_channel):
+            # A contiguous copy of the alpha plane makes the checks below (and the blends) fast.
+            alpha_channel = cv2.extractChannel(np.ascontiguousarray(patch_slice), 3)
+            lowest, highest, _, _ = cv2.minMaxLoc(alpha_channel)
+            if highest == 0:
                 return
 
             # OPTIMIZATION: cv2.addWeighted if uniform alpha
             # This is significantly faster than manual blending.
             first_alpha = alpha_channel[0, 0]
-            if np.all(alpha_channel == first_alpha):
+            if lowest == highest:
                 alpha_f = float(first_alpha) / 255.0
                 if alpha_f == 1.0:
                     # Treat as blocking if fully opaque
-                    buffer[buffer_y1:buffer_y2, buffer_x1:buffer_x2, :3] = patch_slice[:, :, :3]
+                    buffer[buffer_y1:buffer_y2, buffer_x1:buffer_x2, :3] = _bgr(patch_slice)
                     if buffer.shape[2] == 4:
                         buffer[buffer_y1:buffer_y2, buffer_x1:buffer_x2, 3] = ALPHA_OPAQUE
                     return
@@ -98,7 +158,7 @@ def composite_patch(
                     return
 
                 dst_view = buffer[buffer_y1:buffer_y2, buffer_x1:buffer_x2, :3]
-                src_bgr = np.ascontiguousarray(patch_slice[:, :, :3])
+                src_bgr = _bgr(patch_slice)
 
                 if dst_view.flags.c_contiguous:
                     cv2.addWeighted(
@@ -131,6 +191,13 @@ def composite_patch(
                     buffer[buffer_y1:buffer_y2, buffer_x1:buffer_x2, 3] = blended_alpha.astype(
                         np.uint8
                     )
+                return
+
+            # Sparse patches (panels, outlines, rings on a transparent screen): blend only the
+            # pixels that are not transparent instead of the whole screen.
+            touched = alpha_channel > 0
+            if np.count_nonzero(touched) < SPARSE_FRACTION * touched.size:
+                _blend_sparse(buffer, buffer_x1, buffer_y1, patch_slice, alpha_channel, touched)
                 return
 
             # Standard alpha blending for variable alpha

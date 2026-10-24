@@ -554,6 +554,7 @@ def run_app(args):
 
                         if not state.is_running:
                             logger.info("Shutdown requested via state.is_running")
+                            main_loop.is_running = False  # end the loop, not only this frame
                             return False
 
                         # B. Process and Render
@@ -581,7 +582,7 @@ def run_app(args):
                             # C. Update Hardware Output
                             if mouse_hands is not None:
                                 mouse_hands.draw(output_image)
-                            app_win.update_image(output_image)
+                            app_win.update_image(output_image, pump=False)
                             if app_win.user_closed():
                                 logger.info("Projection window closed by the user")
                                 state.is_running = False

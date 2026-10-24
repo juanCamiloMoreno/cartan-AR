@@ -122,3 +122,24 @@ def test_camera_good_frame_resets_the_failure_count(mock_capture, mock_is_pi):
     for _ in range(REOPEN_AFTER_FAILED_READS - 1):
         cam.read()
     assert mock_capture.call_count == 1
+
+
+def test_the_mock_camera_does_not_run_faster_than_a_camera():
+    import time
+
+    from light_map.vision.infrastructure.camera import MOCK_FRAME_INTERVAL, MagicMockCamera
+
+    mock = MagicMockCamera(8, 8)
+    start = time.perf_counter()
+    for _ in range(3):
+        ok, frame = mock.read()
+        assert ok and frame.shape == (8, 8, 3)
+    assert time.perf_counter() - start >= 2.5 * MOCK_FRAME_INTERVAL
+
+
+def test_the_mock_camera_does_not_use_a_huge_frame(monkeypatch):
+    monkeypatch.setenv("MOCK_CAMERA", "1")
+    cam = Camera(index=0)
+    assert (cam.width, cam.height) == (1920, 1080)
+    small = Camera(index=0, width=640, height=480)
+    assert (small.width, small.height) == (640, 480)

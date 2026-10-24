@@ -7,6 +7,9 @@ changes to the next gesture quickly; "Sin mano" takes the hand away.
 
 from __future__ import annotations
 
+import logging
+import time
+
 import cv2
 import numpy as np
 
@@ -44,6 +47,9 @@ class MouseHands:
         self.menu_at: tuple[int, int] | None = None
         self._hover: int | None = None
         self._injected = False
+        self.fps = 0.0  # frames per second, smoothed
+        self._last_frame = 0.0
+        self._last_log = 0.0
 
     # Mouse
 
@@ -101,8 +107,28 @@ class MouseHands:
             state.update_inputs(hands, now)
         self._injected = bool(hands)
 
+    def tick(self, now: float | None = None) -> None:
+        """Counts a frame: keeps the smoothed FPS and logs it every 5 seconds."""
+        now = time.perf_counter() if now is None else now
+        if self._last_frame:
+            instant = 1.0 / max(now - self._last_frame, 1e-6)
+            self.fps = instant if self.fps == 0 else 0.9 * self.fps + 0.1 * instant
+        self._last_frame = now
+        if now - self._last_log >= 5.0:
+            self._last_log = now
+            logging.info("Projection FPS: %.1f", self.fps)
+
     def draw(self, image: np.ndarray) -> None:
-        """The hint in the corner and, when open, the right-click menu."""
+        """The FPS counter at the top, the hint in the corner and, when open, the right-click menu."""
+        self.tick()
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        label = f"FPS {self.fps:4.1f}"
+        color = (
+            (80, 230, 80) if self.fps >= 20 else (0, 215, 255) if self.fps >= 10 else (60, 60, 255)
+        )
+        x = image.shape[1] // 2 + 500
+        cv2.putText(image, label, (x, 44), font, 0.95, (0, 0, 0), 6, cv2.LINE_AA)
+        cv2.putText(image, label, (x, 44), font, 0.95, color, 2, cv2.LINE_AA)
         hint = "CLIC DERECHO: GESTOS   CLIC CENTRAL: SIGUIENTE"
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(image, hint, (20, image.shape[0] - 16), font, 0.7, (0, 0, 0), 5, cv2.LINE_AA)

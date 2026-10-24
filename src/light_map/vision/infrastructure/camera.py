@@ -1,11 +1,14 @@
 import logging
 import os
+import time
 
 import cv2
 import numpy as np
 
 
 REOPEN_AFTER_FAILED_READS = 60
+MOCK_MAX_WIDTH = 1920
+MOCK_FRAME_INTERVAL = 1 / 15  # seconds between the frames of the fake camera
 
 
 class Camera:
@@ -69,6 +72,10 @@ class Camera:
     def _initialize_camera(self):
         if os.environ.get("MOCK_CAMERA") == "1":
             logging.info("MOCK_CAMERA=1 detected. Using dummy camera.")
+            if self.width > MOCK_MAX_WIDTH:
+                # The default 4608x2592 is a 36 MB frame copied on every frame: far heavier than
+                # any real webcam and it slows the whole app down.
+                self.width, self.height = 1920, 1080
             self.cap = MagicMockCamera(self.width, self.height)
             return
 
@@ -155,7 +162,9 @@ class MagicMockCamera:
         return 0
 
     def read(self):
-        # Return a black frame
+        # A black frame at a camera-like pace: an unthrottled fake camera copies frames into
+        # shared memory as fast as it can and starves the rest of the app.
+        time.sleep(MOCK_FRAME_INTERVAL)
         return True, np.zeros((self.height, self.width, 3), dtype=np.uint8)
 
     def release(self):
