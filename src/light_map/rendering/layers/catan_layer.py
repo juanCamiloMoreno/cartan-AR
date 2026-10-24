@@ -14,7 +14,7 @@ from light_map.catan.layout import (
     tile_center,
     vertex_position,
 )
-from light_map.catan.screens import buttons, screen_kind
+from light_map.catan.screens import buttons, quit_button, screen_kind
 from light_map.catan.svg import COLORS, DOTS
 from light_map.catan.wizard import BALANCE_LABELS
 from light_map.core.common_types import ImagePatch, Layer
@@ -442,6 +442,18 @@ class CatanLayer(Layer):
                 big(buffer, second, (cx, button.y + 290), 1.3)
             big(buffer, "SENALA UNA OPCION CON EL DEDO 1 SEGUNDO", (w // 2, h - 110), 1.5)
 
+    def _draw_quit(self, buffer) -> None:
+        """A small exit button at the bottom center (point at it for 3 seconds)."""
+        button = quit_button(self.width, self.height)
+        top_left, bottom_right = (button.x, button.y), (button.x + button.w, button.y + button.h)
+        cv2.rectangle(buffer, top_left, bottom_right, (30, 30, 30, 255), -1)
+        cv2.rectangle(buffer, top_left, bottom_right, (150, 150, 150, 255), 3)
+        center = (button.x + button.w // 2, button.y + button.h // 2 - 8)
+        self._big_text(buffer, "SALIR", center, 0.9, (255, 255, 255, 255), 2)
+        self._big_text(
+            buffer, "SENALA 3 S", (center[0], center[1] + 26), 0.5, (200, 200, 200, 255), 1
+        )
+
     def _draw_turn_corner(self, buffer, view) -> None:
         """A big quarter circle in the corner of the player in turn, and the pass-turn button."""
         game = view.game or {}
@@ -551,6 +563,7 @@ class CatanLayer(Layer):
         kind = screen_kind(view)
         if kind:
             self._draw_screen(buffer, view, kind)
+            self._draw_quit(buffer)
             return [ImagePatch(x=0, y=0, width=self.width, height=self.height, data=buffer)]
 
         if view.producing:
@@ -602,5 +615,6 @@ class CatanLayer(Layer):
         self._draw_panels(buffer, view)
         self._draw_roll_band(buffer, view)
         self._draw_banner(buffer, view)
+        self._draw_quit(buffer)
 
         return [ImagePatch(x=0, y=0, width=self.width, height=self.height, data=buffer)]

@@ -582,6 +582,9 @@ def run_app(args):
                             if mouse_hands is not None:
                                 mouse_hands.draw(output_image)
                             app_win.update_image(output_image)
+                            if app_win.user_closed():
+                                logger.info("Projection window closed by the user")
+                                state.is_running = False
 
                         # D. Update State Mirror for Remote Driver (AFTER process_state)
                         if state_mirror is not None:

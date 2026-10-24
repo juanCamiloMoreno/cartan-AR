@@ -471,8 +471,11 @@ class ViewingScene(BaseMapScene):
         """Asks the app to press the held button; the manager decides what it does."""
         state = getattr(self.context, "state", None)
         if state is not None and self._button:
-            payload = json.dumps({"button": self._button})
-            state.pending_actions.append({"action": "CATAN_UI", "payload": payload})
+            if self._button == "quit":
+                state.pending_actions.append({"action": "QUIT"})
+            else:
+                payload = json.dumps({"button": self._button})
+                state.pending_actions.append({"action": "CATAN_UI", "payload": payload})
         self._button = None
         self.context.events.schedule(
             config_vars.CATAN_BUTTON_COOLDOWN, lambda: None, key=TimerKey.CATAN_BUTTON_COOLDOWN

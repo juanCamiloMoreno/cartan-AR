@@ -18,6 +18,7 @@ POINT_HOLD = 1.0  # seconds pointing at a button
 SEAT_HOLD = 3.0  # seconds with the fist on a corner circle
 END_TURN_HOLD = 5.0  # seconds with the fist on the "pass the turn" button
 SEAT_RADIUS = 130
+QUIT_HOLD = 3.0  # seconds pointing at the exit button
 
 # What the whole projection shows instead of the board.
 FULL_SCREENS = ("players", "rules", "order", "seats", "mode")
@@ -142,9 +143,14 @@ def buttons(view, width: int, height: int) -> list[Button]:
     return []
 
 
+def quit_button(width: int, height: int) -> Button:
+    """The exit button, always at the bottom center: pointing at it for 3 s closes the app."""
+    return Button("quit", width // 2 - 120, height - 74, 240, 56, "SALIR", hold=QUIT_HOLD)
+
+
 def button_under(view, hand, width: int, height: int) -> Button | None:
     """The button this hand is pressing: its gesture matches and it is over the button."""
-    for button in buttons(view, width, height):
+    for button in [*buttons(view, width, height), quit_button(width, height)]:
         if hand.gesture == button.gesture and button.contains(hand.proj_pos):
             return button
     return None

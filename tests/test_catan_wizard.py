@@ -426,3 +426,49 @@ def test_the_shaka_is_in_the_mouse_menu():
     from light_map.input.mouse_hands import MENU_ITEMS
 
     assert GestureType.SHAKA in [gesture for gesture, _ in MENU_ITEMS]
+
+
+def test_pointing_at_the_exit_button_for_three_seconds_quits(context):
+    from light_map.catan.screens import quit_button
+
+    manager, state = fresh()
+    scene = scene_for(context, state)
+    exit_button = quit_button(W, H)
+    scene.update(hand(GestureType.POINTING, center(exit_button)), [], 0.0)
+    (call,) = hold_calls(context, TimerKey.CATAN_BUTTON_HOLD)
+    assert call.args[0] == 3.0
+    scene.update([], [Action.CATAN_BUTTON_REQUEST], 3.0)
+    assert state.pending_actions[-1] == {"action": "QUIT"}
+
+
+def test_the_exit_button_is_drawn_on_the_guided_screens_and_in_the_game():
+    from light_map.catan.screens import quit_button
+
+    manager, state = fresh()
+    layer = CatanLayer(state, MagicMock(), W, H)
+    layer.map_system.world_to_screen.side_effect = lambda x, y: (x, y)
+    exit_button = quit_button(W, H)
+    probe = (exit_button.y + exit_button.h // 2, exit_button.x + 8)  # inside, left of the text
+    (screen,) = layer._generate_patches(0.0)
+    assert screen.data[probe[0], probe[1], 3] == 255
+    manager.press(state, "players:3")
+    manager.press(state, "ok")
+    finish_order(manager, state)
+    for corner in range(3):
+        manager.press(state, f"seat:{corner}")
+    manager.press(state, "houses")
+    (board,) = layer._generate_patches(0.0)
+    assert board.data[probe[0], probe[1], 3] > 0
+
+
+def test_a_window_closed_with_its_x_counts_as_closed(monkeypatch):
+    from light_map.core import display_utils
+
+    window = display_utils.ProjectorWindow.__new__(display_utils.ProjectorWindow)
+    window.name, window.closed, window._frames_shown = "projection", False, 0
+    monkeypatch.setattr(display_utils.cv2, "getWindowProperty", lambda *_: 0.0)
+    assert window.user_closed() is False  # nothing was shown yet
+    window._frames_shown = 5
+    assert window.user_closed() is True
+    monkeypatch.setattr(display_utils.cv2, "getWindowProperty", lambda *_: 1.0)
+    assert window.user_closed() is False

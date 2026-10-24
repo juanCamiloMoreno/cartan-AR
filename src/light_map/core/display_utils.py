@@ -106,6 +106,15 @@ class ProjectorWindow:
             self.closed = True
             return -1
 
+    def user_closed(self) -> bool:
+        """True once the person closed the window with its X (OpenCV would reopen it otherwise)."""
+        if self.closed or self._frames_shown == 0:
+            return False
+        try:
+            return cv2.getWindowProperty(self.name, cv2.WND_PROP_VISIBLE) < 1
+        except cv2.error:
+            return True
+
     def close(self):
         if not self.closed:
             self.closed = True
