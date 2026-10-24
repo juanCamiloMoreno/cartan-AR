@@ -74,7 +74,7 @@ def buttons(view, width: int, height: int) -> list[Button]:
         ]
     if kind == "rules":
         rules = view.wizard["rules"]
-        row_w, row_h, gap = 1200, 92, 16
+        row_w, row_h, gap = 1200, 86, 14
         x0 = (width - row_w) // 2
         y0 = 190
         out = [
@@ -88,7 +88,7 @@ def buttons(view, width: int, height: int) -> list[Button]:
                 "balance", x0, y0 + len(RULE_TOGGLES) * (row_h + gap), row_w, row_h, "EQUILIBRIO"
             )
         )
-        bottom = height - 150
+        bottom = height - 200  # leaves the exit button (bottom center) free
         out.append(Button("ok", width // 2 - 220, bottom, 440, 110, "OK"))
         out.append(Button("back", 70, bottom, 260, 110, "ATRAS"))
         return out

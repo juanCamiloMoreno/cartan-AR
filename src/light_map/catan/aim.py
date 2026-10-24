@@ -10,6 +10,7 @@ from collections.abc import Callable
 
 from light_map.catan.board import edges_of, vertices_of
 from light_map.catan.layout import SIZE, edge_endpoints, panel_at, vertex_position
+from light_map.catan.screens import screen_kind
 from light_map.core.common_types import GestureType
 
 
@@ -91,7 +92,7 @@ class BuildAim:
         now: float,
     ) -> Spot | None:
         """The current aim after looking at this frame's hands (None when nothing is aimed)."""
-        kinds = allowed_kinds(view.game)
+        kinds = () if screen_kind(view) else allowed_kinds(view.game)
         tiles = [(t["q"], t["r"]) for t in (view.board or {}).get("tiles", [])]
         if not kinds or not tiles:
             self.spot = None

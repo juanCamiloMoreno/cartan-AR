@@ -441,7 +441,7 @@ class CatanLayer(Layer):
                 px = button.x + button.w - 150
                 cv2.rectangle(buffer, (px - 60, cy - 32), (px + 90, cy + 32), (*pill, 255), -1)
                 big(buffer, text, (px + 15, cy), 1.3, (255, 255, 255, 255), 4)
-            big(buffer, "SENALA 1 SEGUNDO PARA CAMBIAR", (w // 2, h - 190), 1.2)
+            big(buffer, "SENALA 1 SEGUNDO PARA CAMBIAR", (w // 2, h - 245), 1.2)
         elif kind == "order":
             who = (game.get("current_player") or "").upper()
             color = PLAYER_BGR.get(game.get("current_player"), DEFAULT_PLAYER_BGR)

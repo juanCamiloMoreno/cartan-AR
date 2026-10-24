@@ -515,3 +515,58 @@ def test_a_seven_says_so_in_the_announcement():
     (patch,) = layer._generate_patches(0.0)
     red = (patch.data[..., 2] > 200) & (patch.data[..., 0] < 100) & (patch.data[..., 3] == 255)
     assert red[H // 2 : H // 2 + 300, W // 2 - 400 : W // 2 + 400].any()  # the red "SALIO 7"
+
+
+def overlaps(a, b):
+    return a.x < b.x + b.w and b.x < a.x + a.w and a.y < b.y + b.h and b.y < a.y + a.h
+
+
+def test_the_exit_button_never_overlaps_another_button():
+    from light_map.catan.screens import quit_button
+
+    exit_button = quit_button(W, H)
+    manager, state = fresh()
+    seen = []
+
+    def check():
+        for button in buttons(state.catan, W, H):
+            assert not overlaps(button, exit_button), (button.id, state.catan.game["phase"])
+            seen.append(button.id)
+
+    check()  # players
+    manager.press(state, "players:3")
+    check()  # rules
+    manager.press(state, "ok")
+    finish_order(manager, state)
+    check()  # seats
+    for corner in range(3):
+        manager.press(state, f"seat:{corner}")
+    check()  # mode
+    manager.press(state, "houses")
+    g = manager.board.game
+    g.phase, g.order, g.current = "main", ["rojo", "azul", "blanco"], 0
+    manager.publish(state)
+    check()  # pass turn
+    assert {"ok", "back", "map", "end_turn"} <= set(seen) or len(seen) > 8
+
+
+def test_the_build_aim_stays_off_while_a_guided_screen_is_up():
+    from light_map.catan.aim import BuildAim, spot_position
+
+    manager, state = fresh()
+    g = manager.board.game
+    g.phase, g.order, g.current = "main", ["rojo", "azul", "blanco"], 0  # a saved game underneath
+    manager.publish(state)
+    assert state.catan.wizard is not None  # the guided screen is on top
+    pos = spot_position(("vertex", a_vertex_of(manager.board)))
+    aim = BuildAim()
+    assert (
+        aim.update(hand(GestureType.POINTING, pos), state.catan, lambda x, y: (x, y), (W, H), 0.0)
+        is None
+    )
+
+
+def a_vertex_of(board):
+    return next(
+        v for v in sorted(board.all_vertices(), key=sorted) if all(c in board.tiles for c in v)
+    )
