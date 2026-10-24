@@ -49,6 +49,8 @@ DIE_MARGIN = 28
 PULSE_NS = 100_000_000  # the glow of the producing tiles is redrawn every 0.1 s
 DIM_FIRST_SECONDS = 6.0  # how long the board stays dark after a roll
 DIM_STRONG, DIM_SOFT = 175, 85
+ROLL_TUMBLE = 1.0  # seconds the dice spin on the projection after a throw
+ROLL_SHOW = 3.2  # seconds the throw stays big in the middle (the 7 announcement included)
 # Pip positions on a 3x3 grid (column, row), by die value.
 PIPS = {
     1: [(1, 1)],
@@ -117,12 +119,20 @@ class CatanLayer(Layer):
         self.height = height
         self._producing_key: tuple | None = None
         self._producing_since = 0.0
+        self._roll_id: int | None = None
+        self._roll_seen = -1e9
 
     def get_current_version(self) -> int:
         if self.state is None:
             return 0
         version = max(self.state.catan_version, self.state.viewport_version)
         view = self.state.catan
+        if view is not None and view.dice is not None:
+            roll_id = (view.game or {}).get("roll_id")
+            if roll_id != self._roll_id:
+                self._roll_id, self._roll_seen = roll_id, time.monotonic()
+            if time.monotonic() - self._roll_seen < ROLL_SHOW + 0.2:
+                return max(version, time.monotonic_ns() // PULSE_NS * PULSE_NS)
         if view is not None and view.producing:
             # the glow breathes: ask for a redraw a few times per second
             return max(version, time.monotonic_ns() // PULSE_NS * PULSE_NS)
@@ -130,6 +140,42 @@ class CatanLayer(Layer):
 
     def _to_screen(self, points: list[tuple[float, float]]) -> np.ndarray:
         return np.array([self.map_system.world_to_screen(x, y) for x, y in points], np.int32)
+
+    @staticmethod
+    def _draw_die(buffer, x0: int, y0: int, size: int, value: int) -> None:
+        top_left, bottom_right = (x0, y0), (x0 + size, y0 + size)
+        cv2.rectangle(buffer, top_left, bottom_right, (245, 245, 245, 255), -1)
+        cv2.rectangle(buffer, top_left, bottom_right, (20, 20, 20, 255), max(3, size // 28))
+        for col, row in PIPS[value]:
+            center = (x0 + size * (col + 1) // 4, y0 + size * (row + 1) // 4)
+            cv2.circle(buffer, center, max(6, size // 10), (20, 20, 20, 255), -1, cv2.LINE_AA)
+
+    def _draw_roll_animation(self, buffer, view) -> None:
+        """A new throw: the dice spin in the middle of the screen, then show the result big."""
+        age = time.monotonic() - self._roll_seen
+        if view.dice is None or view.total is None or age >= ROLL_SHOW:
+            return
+        w, h = self.width, self.height
+        size = 190
+        cx, cy = w // 2, h // 2 - 40
+        cv2.rectangle(buffer, (cx - 330, cy - 170), (cx + 330, cy + 250), (20, 20, 20, 225), -1)
+        cv2.rectangle(buffer, (cx - 330, cy - 170), (cx + 330, cy + 250), (*HIGHLIGHT_BGR, 255), 6)
+        tumbling = age < ROLL_TUMBLE
+        rng = np.random.default_rng(int(age * 14))
+        for slot, final in enumerate(view.dice):
+            value = int(rng.integers(1, 7)) if tumbling else final
+            jitter = (
+                (int(rng.integers(-14, 15)), int(rng.integers(-14, 15))) if tumbling else (0, 0)
+            )
+            x0 = cx - size - 25 + slot * (size + 50) + jitter[0]
+            self._draw_die(buffer, x0, cy - size // 2 - 20 + jitter[1], size, value)
+        if tumbling:
+            text, color = "TIRANDO...", (255, 255, 255, 255)
+        elif view.total == 7:
+            text, color = "SALIO 7: LADRON", (60, 60, 255, 255)
+        else:
+            text, color = f"= {view.total}", (*HIGHLIGHT_BGR, 255)
+        self._big_text(buffer, text, (cx, cy + 190), 2.2, color, 6)
 
     def _draw_dice(self, buffer: np.ndarray, dice: tuple[int, int], total: int) -> None:
         """Draws both dice and their total in the top-right corner of the projection."""
@@ -614,6 +660,7 @@ class CatanLayer(Layer):
         self._draw_turn_corner(buffer, view)
         self._draw_panels(buffer, view)
         self._draw_roll_band(buffer, view)
+        self._draw_roll_animation(buffer, view)
         self._draw_banner(buffer, view)
         self._draw_quit(buffer)
 

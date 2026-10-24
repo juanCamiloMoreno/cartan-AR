@@ -472,3 +472,46 @@ def test_a_window_closed_with_its_x_counts_as_closed(monkeypatch):
     assert window.user_closed() is True
     monkeypatch.setattr(display_utils.cv2, "getWindowProperty", lambda *_: 1.0)
     assert window.user_closed() is False
+
+
+def test_a_new_throw_is_announced_big_in_the_middle_and_then_goes_to_the_corner():
+    import time
+
+    manager, state = ready_for_mode()
+    manager.press(state, "houses")
+    g = manager.board.game
+    g.phase, g.order, g.current = "roll", ["rojo", "azul", "blanco"], 0
+    manager.publish(state)
+    layer = CatanLayer(state, MagicMock(), W, H)
+    layer.map_system.world_to_screen.side_effect = lambda x, y: (x, y)
+    manager.roll(state, (3, 4))
+    first_id = state.catan.game["roll_id"]
+    assert layer.get_current_version() > 0  # starts the animation clock
+    (during,) = layer._generate_patches(0.0)
+    middle = during.data[H // 2 - 40, W // 2 - 300 : W // 2 + 300]
+    assert (middle[..., 3] == 255).any()  # the plate with the dice is in the middle
+    layer._roll_seen = time.monotonic() - 10  # the announcement is over
+    (after,) = layer._generate_patches(0.0)
+    assert not (after.data[H // 2 - 40, W // 2 - 300 : W // 2 + 300][..., 3] == 255).any()
+    g.phase = "main"
+    g.last_dice = None
+    manager.publish(state)
+    g.phase = "roll"
+    manager.roll(state, (3, 4))  # the same numbers again still count as a new throw
+    assert state.catan.game["roll_id"] == first_id + 1
+
+
+def test_a_seven_says_so_in_the_announcement():
+    manager, state = ready_for_mode()
+    manager.press(state, "houses")
+    g = manager.board.game
+    g.phase, g.order, g.current = "roll", ["rojo", "azul", "blanco"], 0
+    manager.publish(state)
+    layer = CatanLayer(state, MagicMock(), W, H)
+    layer.map_system.world_to_screen.side_effect = lambda x, y: (x, y)
+    manager.roll(state, (3, 4))
+    layer.get_current_version()
+    layer._roll_seen -= 1.5  # past the tumbling
+    (patch,) = layer._generate_patches(0.0)
+    red = (patch.data[..., 2] > 200) & (patch.data[..., 0] < 100) & (patch.data[..., 3] == 255)
+    assert red[H // 2 : H // 2 + 300, W // 2 - 400 : W // 2 + 400].any()  # the red "SALIO 7"

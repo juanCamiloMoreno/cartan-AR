@@ -42,6 +42,7 @@ class CatanManager:
         self.board = board
         self.rng = rng
         self.last_dice: tuple[int, int] | None = None
+        self.roll_id = 0  # grows with every throw: the projection animates each new one
         self._loaded_from: str | None = None
         self._sidecar: str | None = None
         self.report: GenerationReport | None = None
@@ -230,7 +231,7 @@ class CatanManager:
             players=tuple(board.players),
             corners=tuple(board.corners()),
             wizard=self.wizard.to_dict() if self.wizard and self.wizard.step != "game" else None,
-            game=self._game_view(game),
+            game={**self._game_view(game), "roll_id": self.roll_id},
             generator=self.report.to_dict() if self.report and not hidden else None,
             notice=self.notice,
             roads=tuple(RoadView(e, player) for e, player in board.roads.items()),
@@ -254,6 +255,7 @@ class CatanManager:
             self.last_dice = dice or roll_dice(self.rng)
             # Production goes straight to the hands (fix it by hand if a roll was a mistake).
             self.board.collect(self.board.production(sum(self.last_dice)))
+        self.roll_id += 1
         self._save()
         return self.publish(state)
 
