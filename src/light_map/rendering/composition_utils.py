@@ -63,6 +63,18 @@ def _blend_sparse(buffer, x1, y1, patch_slice, alpha_channel, touched) -> None:
         dst[:, :, 3][touched] = (a + dst_alpha * inv // ALPHA_OPAQUE).astype(np.uint8)
 
 
+def _blend_dense(buffer, x1, y1, patch_slice, alpha_channel) -> None:
+    """Variable-alpha blend of a patch over a BGR buffer with OpenCV (a few times faster than
+    numpy's 16-bit arithmetic on a full screen)."""
+    h, w = alpha_channel.shape
+    dst = buffer[y1 : y1 + h, x1 : x1 + w]
+    alpha3 = cv2.cvtColor(alpha_channel, cv2.COLOR_GRAY2BGR)
+    inverse = cv2.bitwise_not(alpha3)
+    top = cv2.multiply(_bgr(patch_slice), alpha3, scale=1 / ALPHA_OPAQUE)
+    bottom = cv2.multiply(np.ascontiguousarray(dst), inverse, scale=1 / ALPHA_OPAQUE)
+    dst[:] = cv2.add(top, bottom)
+
+
 def composite_patch(
     buffer: np.ndarray,
     patch: ImagePatch,
@@ -198,6 +210,10 @@ def composite_patch(
             touched = alpha_channel > 0
             if np.count_nonzero(touched) < SPARSE_FRACTION * touched.size:
                 _blend_sparse(buffer, buffer_x1, buffer_y1, patch_slice, alpha_channel, touched)
+                return
+
+            if buffer.shape[2] == 3:
+                _blend_dense(buffer, buffer_x1, buffer_y1, patch_slice, alpha_channel)
                 return
 
             # Standard alpha blending for variable alpha

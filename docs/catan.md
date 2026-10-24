@@ -145,6 +145,7 @@ Una capa de juego de Catan que usa la proyección, el dashboard y las manos de L
   (señalar, puño, roca, paz, palma, pistola, sin mano); el clic izquierdo elige y el **clic central**
   pasa al siguiente gesto. La mano sigue al cursor y pasa por el mismo código que una mano real:
   anillos, tiempos de sostener, botones del modo guiado, apuntar y construir.
+- **Cobro con animación:** al tirar los dados, el tablero se oscurece y los hexágonos con ese número brillan; de cada uno salen cartas del recurso hacia el panel de cada jugador con una casa (1 carta) o ciudad (2) junto a él, todas al mismo tiempo.
 - **Salir:** hay tres formas: la X de la ventana (en el simulador), la tecla Q con la ventana activa, o el boton SALIR abajo al centro de la proyeccion (senalarlo 3 s).
 - **Opciones de línea de comandos:** `--camera N` elige la cámara y `--no-stereo` usa una sola.
 

@@ -16,6 +16,10 @@ if TYPE_CHECKING:
 from light_map.rendering.composition_utils import composite_patch, covers_screen
 
 
+BUSY_DECAY = 0.85  # how fast "this layer changes all the time" fades away
+BUSY_LEVEL = 0.6  # above this a layer counts as busy and stays out of the remembered picture
+
+
 class Renderer:
     """
     Coordinates the compositing of multiple visual layers into a final frame.
@@ -36,6 +40,10 @@ class Renderer:
         # Version tracking: Dict[Layer, int]
         self.last_layer_versions = {}
         self._last_layer_stack: list[Layer] = []
+        # Picture of the quiet bottom layers (see render) and how busy every layer has been.
+        self._busy: dict[Layer, float] = {}
+        self._snapshot: np.ndarray | None = None
+        self._snapshot_key: tuple | None = None
         # LIGHT_MAP_LAYER_TIMING=1 logs, every 5 s, what each layer costs per composited frame
         self._timing_enabled = bool(os.environ.get("LIGHT_MAP_LAYER_TIMING"))
         self._timing: dict[str, list[float]] = {}
@@ -83,16 +91,17 @@ class Renderer:
         should_composite_frame = stack_changed
 
         # Check for any version changes
+        changed: list[bool] = []
         for layer in layers:
             layer_version = layer.get_current_version()
-            if layer_version != self.last_layer_versions.get(layer, -1):
-                should_composite_frame = True
+            is_new = layer_version != self.last_layer_versions.get(layer, -1)
+            changed.append(is_new)
+            should_composite_frame = should_composite_frame or is_new
 
         if not should_composite_frame:
             return None
 
-        # 2. Composite All Layers
-        self.output_buffer.fill(0)
+        # 2. Composite the layers
         rendered_layers = []
         for layer in layers:
             started = time.perf_counter()
@@ -110,11 +119,39 @@ class Renderer:
             ):
                 first_visible = index
 
+        # The layers at the bottom that rarely change are blended once and remembered: a frame
+        # then only blends the busy layers (hands, animations) over that picture.
+        for layer, is_new in zip(layers, changed, strict=True):
+            busy = self._busy.get(layer, 0.0) * BUSY_DECAY + (1.0 if is_new else 0.0)
+            self._busy[layer] = busy
+        boundary = next(
+            (i for i, layer in enumerate(layers) if self._busy[layer] > BUSY_LEVEL), len(layers)
+        )
+        boundary = max(boundary, first_visible)
+        key = (tuple(id(layer) for layer in layers[:boundary]), first_visible, boundary)
+        reusable = (
+            self._snapshot is not None
+            and self._snapshot_key == key
+            and not stack_changed
+            and not any(changed[:boundary])
+        )
+        if reusable:
+            np.copyto(self.output_buffer, self._snapshot)
+            first_to_blend = boundary
+        else:
+            self.output_buffer.fill(0)
+            first_to_blend = first_visible
+
         for index, (layer, layer_patches, render_spent) in enumerate(rendered_layers):
             layer_name = layer.__class__.__name__
             rendered = time.perf_counter()
-            if index < first_visible:
+            if index < first_to_blend:
                 continue
+
+            if index == boundary and not reusable and boundary > 0:
+                # everything below is blended: keep that picture for the next frames
+                self._snapshot = self.output_buffer.copy()
+                self._snapshot_key = key
 
             with track_wait(f"layer_composite_{layer_name}", instrument):
                 if layer_patches:

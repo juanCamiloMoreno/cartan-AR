@@ -26,3 +26,16 @@ def test_the_sparse_blend_gives_the_same_pixels_as_the_full_blend():
     full = blend(patch, 0.0)  # never sparse
     sparse = blend(patch, 1.1)  # always sparse
     assert np.abs(full.astype(int) - sparse.astype(int)).max() <= 1
+
+
+def test_the_dense_blend_matches_the_reference_formula_on_a_bgr_buffer():
+    rng = np.random.default_rng(3)
+    buffer = rng.integers(0, 256, (90, 120, 3), dtype=np.uint8)
+    patch = rng.integers(0, 256, (90, 120, 4), dtype=np.uint8)
+    patch[..., 3] = rng.integers(1, 255, (90, 120), dtype=np.uint8)  # dense, variable alpha
+    expected = (
+        patch[..., :3].astype(np.uint16) * patch[..., 3:4].astype(np.uint16)
+        + buffer.astype(np.uint16) * (255 - patch[..., 3:4].astype(np.uint16))
+    ) // 255
+    composite_patch(buffer, ImagePatch(0, 0, 120, 90, patch), LayerMode.NORMAL, 120, 90)
+    assert np.abs(buffer.astype(int) - expected.astype(int)).max() <= 2

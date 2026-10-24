@@ -46,11 +46,8 @@ ROAD_THICKNESS = 9
 DIE_SIZE = 104
 DIE_GAP = 20
 DIE_MARGIN = 28
-PULSE_NS = 100_000_000  # the glow of the producing tiles is redrawn every 0.1 s
 DIM_FIRST_SECONDS = 6.0  # how long the board stays dark after a roll
 DIM_STRONG, DIM_SOFT = 175, 85
-ROLL_TUMBLE = 1.0  # seconds the dice spin on the projection after a throw
-ROLL_SHOW = 3.2  # seconds the throw stays big in the middle (the 7 announcement included)
 # Pip positions on a 3x3 grid (column, row), by die value.
 PIPS = {
     1: [(1, 1)],
@@ -118,64 +115,30 @@ class CatanLayer(Layer):
         self.width = width
         self.height = height
         self._producing_key: tuple | None = None
-        self._producing_since = 0.0
-        self._roll_id: int | None = None
-        self._roll_seen = -1e9
+        self._producing_mono = 0.0
+
+    def _sync_dim(self, view) -> None:
+        """Remembers when the current throw started (the board is darker at first)."""
+        key = ((view.game or {}).get("roll_id"), view.total)
+        if key != self._producing_key:
+            self._producing_key, self._producing_mono = key, time.monotonic()
+
+    def _dim_strong(self) -> bool:
+        return time.monotonic() - self._producing_mono < DIM_FIRST_SECONDS
 
     def get_current_version(self) -> int:
         if self.state is None:
             return 0
         version = max(self.state.catan_version, self.state.viewport_version)
         view = self.state.catan
-        if view is not None and view.dice is not None:
-            roll_id = (view.game or {}).get("roll_id")
-            if roll_id != self._roll_id:
-                self._roll_id, self._roll_seen = roll_id, time.monotonic()
-            if time.monotonic() - self._roll_seen < ROLL_SHOW + 0.2:
-                return max(version, time.monotonic_ns() // PULSE_NS * PULSE_NS)
         if view is not None and view.producing:
-            # the glow breathes: ask for a redraw a few times per second
-            return max(version, time.monotonic_ns() // PULSE_NS * PULSE_NS)
+            self._sync_dim(view)
+            if not self._dim_strong():  # one more redraw when the board lightens up
+                version = max(version, int((self._producing_mono + DIM_FIRST_SECONDS) * 1e9))
         return version
 
     def _to_screen(self, points: list[tuple[float, float]]) -> np.ndarray:
         return np.array([self.map_system.world_to_screen(x, y) for x, y in points], np.int32)
-
-    @staticmethod
-    def _draw_die(buffer, x0: int, y0: int, size: int, value: int) -> None:
-        top_left, bottom_right = (x0, y0), (x0 + size, y0 + size)
-        cv2.rectangle(buffer, top_left, bottom_right, (245, 245, 245, 255), -1)
-        cv2.rectangle(buffer, top_left, bottom_right, (20, 20, 20, 255), max(3, size // 28))
-        for col, row in PIPS[value]:
-            center = (x0 + size * (col + 1) // 4, y0 + size * (row + 1) // 4)
-            cv2.circle(buffer, center, max(6, size // 10), (20, 20, 20, 255), -1, cv2.LINE_AA)
-
-    def _draw_roll_animation(self, buffer, view) -> None:
-        """A new throw: the dice spin in the middle of the screen, then show the result big."""
-        age = time.monotonic() - self._roll_seen
-        if view.dice is None or view.total is None or age >= ROLL_SHOW:
-            return
-        w, h = self.width, self.height
-        size = 190
-        cx, cy = w // 2, h // 2 - 40
-        cv2.rectangle(buffer, (cx - 330, cy - 170), (cx + 330, cy + 250), (20, 20, 20, 225), -1)
-        cv2.rectangle(buffer, (cx - 330, cy - 170), (cx + 330, cy + 250), (*HIGHLIGHT_BGR, 255), 6)
-        tumbling = age < ROLL_TUMBLE
-        rng = np.random.default_rng(int(age * 14))
-        for slot, final in enumerate(view.dice):
-            value = int(rng.integers(1, 7)) if tumbling else final
-            jitter = (
-                (int(rng.integers(-14, 15)), int(rng.integers(-14, 15))) if tumbling else (0, 0)
-            )
-            x0 = cx - size - 25 + slot * (size + 50) + jitter[0]
-            self._draw_die(buffer, x0, cy - size // 2 - 20 + jitter[1], size, value)
-        if tumbling:
-            text, color = "TIRANDO...", (255, 255, 255, 255)
-        elif view.total == 7:
-            text, color = "SALIO 7: LADRON", (60, 60, 255, 255)
-        else:
-            text, color = f"= {view.total}", (*HIGHLIGHT_BGR, 255)
-        self._big_text(buffer, text, (cx, cy + 190), 2.2, color, 6)
 
     def _draw_dice(self, buffer: np.ndarray, dice: tuple[int, int], total: int) -> None:
         """Draws both dice and their total in the top-right corner of the projection."""
@@ -579,25 +542,16 @@ class CatanLayer(Layer):
             buffer, "ROCK PARA TIRAR LOS DADOS", (self.width // 2, y0 + 220), 1.8, (255,) * 4, 4
         )
 
-    def _draw_production(self, buffer: np.ndarray, view, now: float) -> None:
-        """Darkens the board and lights up (with a soft pulse) the tiles that pay on this roll."""
-        key = (view.total, tuple((t.q, t.r) for t in view.producing))
-        if key != self._producing_key:
-            self._producing_key = key
-            self._producing_since = now
-        strong = now - self._producing_since < DIM_FIRST_SECONDS
-        buffer[:] = (22, 16, 16, DIM_STRONG if strong else DIM_SOFT)
-        pulse = 0.5 + 0.5 * math.sin(now * 5.0)
+    def _draw_production(self, buffer: np.ndarray, view) -> None:
+        """Darkens the board; the tiles that pay on this roll keep their colors and a gold edge
+        (the pulsing halo and the flying cards are drawn by the effects layer)."""
+        self._sync_dim(view)
+        buffer[:] = (22, 16, 16, DIM_STRONG if self._dim_strong() else DIM_SOFT)
         polys = [self._to_screen(hex_corners(t.q, t.r)) for t in view.producing]
         for poly in polys:
             cv2.fillPoly(buffer, [poly], (0, 0, 0, 0), lineType=cv2.LINE_AA)  # full colors again
         for poly in polys:
-            glow = int(60 + 120 * pulse)
-            cv2.polylines(buffer, [poly], True, (*HIGHLIGHT_BGR, glow), 26, cv2.LINE_AA)
-            cv2.polylines(buffer, [poly], True, (*HIGHLIGHT_BGR, 255), 9, cv2.LINE_AA)
-            cv2.polylines(
-                buffer, [poly], True, (255, 255, 255, int(120 + 135 * pulse)), 3, cv2.LINE_AA
-            )
+            cv2.polylines(buffer, [poly], True, (*HIGHLIGHT_BGR, 255), 7, cv2.LINE_AA)
 
     def _generate_patches(self, current_time: float) -> list[ImagePatch]:
         view = self.state.catan if self.state is not None else None
@@ -613,7 +567,7 @@ class CatanLayer(Layer):
             return [ImagePatch(x=0, y=0, width=self.width, height=self.height, data=buffer)]
 
         if view.producing:
-            self._draw_production(buffer, view, current_time)
+            self._draw_production(buffer, view)
 
         self._draw_revealed_tiles(buffer, view)
         self._draw_ports(buffer, view)
@@ -660,7 +614,6 @@ class CatanLayer(Layer):
         self._draw_turn_corner(buffer, view)
         self._draw_panels(buffer, view)
         self._draw_roll_band(buffer, view)
-        self._draw_roll_animation(buffer, view)
         self._draw_banner(buffer, view)
         self._draw_quit(buffer)
 

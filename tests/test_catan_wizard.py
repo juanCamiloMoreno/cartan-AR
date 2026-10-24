@@ -474,47 +474,106 @@ def test_a_window_closed_with_its_x_counts_as_closed(monkeypatch):
     assert window.user_closed() is False
 
 
-def test_a_new_throw_is_announced_big_in_the_middle_and_then_goes_to_the_corner():
-    import time
+def effects_for(manager, state):
+    from light_map.rendering.layers.effects_layer import EffectsLayer
 
+    layer = EffectsLayer(state, MagicMock(), W, H)
+    layer.map_system.world_to_screen.side_effect = lambda x, y: (x, y)
+    return layer
+
+
+def in_roll_phase():
     manager, state = ready_for_mode()
     manager.press(state, "houses")
     g = manager.board.game
     g.phase, g.order, g.current = "roll", ["rojo", "azul", "blanco"], 0
     manager.publish(state)
-    layer = CatanLayer(state, MagicMock(), W, H)
-    layer.map_system.world_to_screen.side_effect = lambda x, y: (x, y)
+    return manager, state
+
+
+def test_a_new_throw_is_announced_big_in_the_middle_and_then_goes_to_the_corner():
+    manager, state = in_roll_phase()
+    layer = effects_for(manager, state)
+    assert layer._generate_patches(0.0) == []  # nothing thrown yet
     manager.roll(state, (3, 4))
     first_id = state.catan.game["roll_id"]
     assert layer.get_current_version() > 0  # starts the animation clock
-    (during,) = layer._generate_patches(0.0)
-    middle = during.data[H // 2 - 40, W // 2 - 300 : W // 2 + 300]
-    assert (middle[..., 3] == 255).any()  # the plate with the dice is in the middle
-    layer._roll_seen = time.monotonic() - 10  # the announcement is over
-    (after,) = layer._generate_patches(0.0)
-    assert not (after.data[H // 2 - 40, W // 2 - 300 : W // 2 + 300][..., 3] == 255).any()
-    g.phase = "main"
-    g.last_dice = None
-    manager.publish(state)
+    patches = layer._generate_patches(0.0)
+    assert any(p.x < W // 2 < p.x + p.width and p.width > 500 for p in patches)  # the dice plate
+    layer._roll_seen -= 10  # the announcement is over
+    assert not any(p.width > 500 for p in layer._generate_patches(0.0))
+    g = manager.board.game
     g.phase = "roll"
     manager.roll(state, (3, 4))  # the same numbers again still count as a new throw
     assert state.catan.game["roll_id"] == first_id + 1
+    layer.get_current_version()
+    assert layer._age() < 1.0
 
 
 def test_a_seven_says_so_in_the_announcement():
-    manager, state = ready_for_mode()
-    manager.press(state, "houses")
-    g = manager.board.game
-    g.phase, g.order, g.current = "roll", ["rojo", "azul", "blanco"], 0
-    manager.publish(state)
-    layer = CatanLayer(state, MagicMock(), W, H)
-    layer.map_system.world_to_screen.side_effect = lambda x, y: (x, y)
+    manager, state = in_roll_phase()
+    layer = effects_for(manager, state)
     manager.roll(state, (3, 4))
     layer.get_current_version()
     layer._roll_seen -= 1.5  # past the tumbling
+    (plate,) = [p for p in layer._generate_patches(0.0) if p.width > 500]
+    red = (plate.data[..., 2] > 200) & (plate.data[..., 0] < 100) & (plate.data[..., 3] == 255)
+    assert red.any()  # the red "SALIO 7"
+
+
+def test_cards_fly_from_every_paying_tile_to_every_player_with_a_building_there():
+    from light_map.catan.board import Building, vertices_of
+    from light_map.rendering.layers.effects_layer import FLIGHT_START, plan_flights
+
+    manager, state = in_roll_phase()
+    board = manager.board
+    tile = next(
+        c
+        for c, t in board.tiles.items()
+        if t.number is not None
+        and c != board.robber
+        and all(n in board.tiles for v in vertices_of(c) for n in v)
+    )
+    number = board.tiles[tile].number
+    inner = list(vertices_of(tile))
+    board.buildings[inner[0]] = ("rojo", Building.SETTLEMENT)
+    board.buildings[inner[3]] = ("azul", Building.CITY)
+    manager.publish(state)
+    dice = (number // 2, number - number // 2) if number > 2 else (1, 1)
+    manager.roll(state, dice)
+    flights = plan_flights(state.catan)
+    mine = [
+        f
+        for f in flights
+        if f.start == __import__("light_map.catan.layout", fromlist=["x"]).tile_center(*tile)
+    ]
+    assert sorted(f.player for f in mine) == ["azul", "azul", "rojo"]  # a city pays two cards
+    assert all(f.resource == board.tiles[tile].resource for f in mine)
+    layer = effects_for(manager, state)
+    layer.get_current_version()
+    layer._roll_seen -= FLIGHT_START + 0.5  # the cards are on their way
+    cards = [p for p in layer._generate_patches(0.0) if p.width < 120 and p.height < 120]
+    assert cards  # at least one card is in the air
+    layer._roll_seen -= 30  # long after
+    assert layer._generate_patches(0.0) == [] or all(
+        p.width < 200 for p in layer._generate_patches(0.0)
+    )
+
+
+def test_the_board_layer_darkens_everything_but_the_paying_tiles():
+    manager, state = in_roll_phase()
+    manager.roll(state, (4, 4))
+    layer = CatanLayer(state, MagicMock(), W, H)
+    layer.map_system.world_to_screen.side_effect = lambda x, y: (x, y)
+    layer.get_current_version()
     (patch,) = layer._generate_patches(0.0)
-    red = (patch.data[..., 2] > 200) & (patch.data[..., 0] < 100) & (patch.data[..., 3] == 255)
-    assert red[H // 2 : H // 2 + 300, W // 2 - 400 : W // 2 + 400].any()  # the red "SALIO 7"
+    producing = state.catan.producing
+    if producing:
+        from light_map.catan.layout import tile_center
+
+        x, y = (int(v) for v in tile_center(producing[0].q, producing[0].r))
+        assert patch.data[y, x, 3] == 0  # the paying tile keeps its colors
+    assert (patch.data[..., 3] > 0).any()
 
 
 def overlaps(a, b):

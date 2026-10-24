@@ -8,6 +8,7 @@ from light_map.rendering.layers.calibration_layer import CalibrationLayer
 from light_map.rendering.layers.catan_layer import CatanLayer
 from light_map.rendering.layers.cursor_layer import CursorLayer
 from light_map.rendering.layers.door_layer import DoorLayer
+from light_map.rendering.layers.effects_layer import EffectsLayer
 from light_map.rendering.layers.flash_layer import FlashLayer
 from light_map.rendering.layers.fow_layer import FogOfWarLayer
 from light_map.rendering.layers.hand_feedback_layer import HandFeedbackLayer
@@ -68,6 +69,7 @@ class LayerStackManager:
             stereo_triangulator=getattr(context, "stereo_triangulator", None),
         )
         self.catan_layer = CatanLayer(state, context.map_system, config.width, config.height)
+        self.effects_layer = EffectsLayer(state, context.map_system, config.width, config.height)
         self.menu_layer = MenuLayer(state)
         self.token_layer = TokenLayer(state, context)
         self.notification_layer = NotificationLayer(state, context)
@@ -115,6 +117,7 @@ class LayerStackManager:
         return [
             self.background_composite,
             self.catan_layer,
+            self.effects_layer,
             self.hand_mask_layer,
             self.token_layer,
             self.ping_layer,
@@ -164,6 +167,7 @@ class LayerStackManager:
         layers = [
             self.map_layer,
             self.catan_layer,
+            self.effects_layer,
             self.door_layer,
             self.aruco_mask_layer,
             self.hand_mask_layer,
