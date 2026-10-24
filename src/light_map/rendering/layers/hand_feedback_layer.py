@@ -1,3 +1,5 @@
+import time
+
 import cv2
 import numpy as np
 
@@ -22,6 +24,7 @@ from light_map.core.common_types import GestureType, ImagePatch, Layer
 from light_map.state.world_state import WorldState
 
 
+REFRESH_NS = 33_000_000  # redraw period of the rings while a hand is present
 PATCH_W = 300
 PATCH_H = 190
 RING_RADIUS = 34
@@ -59,7 +62,12 @@ class HandFeedbackLayer(Layer):
     def get_current_version(self) -> int:
         if self.state is None:
             return 0
-        return max(self.state.hands_version, self.state.catan_version)
+        version = max(self.state.hands_version, self.state.catan_version)
+        if self.state.inputs:
+            # A hand that stays still changes nothing, yet its progress ring must keep filling:
+            # ask for a redraw about 30 times per second while a hand is on the table.
+            return max(version, time.monotonic_ns() // REFRESH_NS * REFRESH_NS)
+        return version
 
     def _target_of(self, hand) -> tuple[str, object] | None:
         """(what the hold triggers, the target) for a hand that holds an action gesture."""

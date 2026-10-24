@@ -252,3 +252,20 @@ def test_the_layer_marks_the_aim_and_shows_the_build_progress():
     hold = layer._hold_for(0, state.inputs[0], 0.9)
     assert hold[0] == "construir"
     assert hold[1] == config_vars.CATAN_BUILD_HOLD_TIME
+
+
+def test_a_still_hand_keeps_asking_for_redraws_so_the_ring_keeps_filling():
+    import time
+
+    from light_map.rendering.layers.hand_feedback_layer import HandFeedbackLayer
+
+    manager, state = started()
+    layer = HandFeedbackLayer(state, W, H, MagicMock())
+    state.inputs = hand(GestureType.OPEN_PALM, (900, 500))
+    first = layer.get_current_version()
+    time.sleep(0.08)
+    assert layer.get_current_version() > first  # same hand, same place: still a new frame
+    state.inputs = []
+    quiet = layer.get_current_version()
+    time.sleep(0.08)
+    assert layer.get_current_version() == quiet  # no hand: nothing to redraw
